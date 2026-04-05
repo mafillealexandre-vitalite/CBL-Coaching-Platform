@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import html2canvas from 'html2canvas'
 import circuitsData from '../data/circuits.json'
 
 const LEVEL_LABELS = { 1: 'Amateur', 2: 'Amateur+', 3: 'Espoir', 4: 'Pro', 5: 'Elite' }
@@ -15,7 +16,7 @@ function SimulationMode({ circuit, onClose }) {
   const [elapsed, setElapsed] = useState(0)
   const [running, setRunning] = useState(false)
   const [completedExs, setCompletedExs] = useState({})
-  const [phase, setPhase] = useState('countdown') // countdown | running | done
+  const [phase, setPhase] = useState('countdown')
   const [countdown, setCountdown] = useState(3)
   const intervalRef = useRef(null)
 
@@ -24,16 +25,11 @@ function SimulationMode({ circuit, onClose }) {
   const pct = Math.min(1, elapsed / circuit.timeCap)
   const isLow = remaining < 60 && remaining > 0
 
-  // Countdown phase
   useEffect(() => {
     if (phase === 'countdown' && running) {
       intervalRef.current = setInterval(() => {
         setCountdown(c => {
-          if (c <= 1) {
-            clearInterval(intervalRef.current)
-            setPhase('running')
-            return 0
-          }
+          if (c <= 1) { clearInterval(intervalRef.current); setPhase('running'); return 0 }
           return c - 1
         })
       }, 1000)
@@ -41,16 +37,11 @@ function SimulationMode({ circuit, onClose }) {
     }
   }, [phase, running])
 
-  // Timer phase
   useEffect(() => {
     if (phase === 'running') {
       intervalRef.current = setInterval(() => {
         setElapsed(e => {
-          if (e >= circuit.timeCap + 30) {
-            clearInterval(intervalRef.current)
-            setPhase('done')
-            return e
-          }
+          if (e >= circuit.timeCap + 30) { clearInterval(intervalRef.current); setPhase('done'); return e }
           return e + 1
         })
       }, 1000)
@@ -67,54 +58,31 @@ function SimulationMode({ circuit, onClose }) {
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 bg-black/95 flex flex-col"
     >
-      {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <div>
           <div className="text-xs text-text-muted">{circuit.event}</div>
           <div className="font-bold text-sm">{circuit.name}</div>
         </div>
-        <button onClick={onClose} className="btn-ghost text-xs">
+        <button onClick={onClose} className="btn-ghost text-xs p-2">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center gap-6 px-4 overflow-y-auto py-6">
-
-        {/* Countdown overlay */}
         {phase === 'countdown' && running && countdown > 0 && (
-          <motion.div
-            key={countdown}
-            initial={{ scale: 1.5, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="text-8xl font-bold text-brand tabular-nums"
-          >
+          <motion.div key={countdown} initial={{ scale: 1.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ opacity: 0 }} className="text-8xl font-bold text-brand tabular-nums">
             {countdown}
           </motion.div>
         )}
 
-        {/* Timer ring */}
         {(phase === 'running' || phase === 'done') && (
           <div className="relative w-48 h-48">
             <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
               <circle cx="60" cy="60" r="54" fill="none" stroke="#1A1A1A" strokeWidth="8" />
-              <circle
-                cx="60" cy="60" r="54"
-                fill="none"
-                stroke={isOvertime ? '#FF3D3D' : isLow ? '#FF9500' : '#00D4FF'}
-                strokeWidth="8"
-                strokeLinecap="round"
-                strokeDasharray={2 * Math.PI * 54}
-                strokeDashoffset={2 * Math.PI * 54 * (1 - pct)}
-                style={{ transition: 'stroke-dashoffset 0.5s ease, stroke 0.3s' }}
-              />
+              <circle cx="60" cy="60" r="54" fill="none" stroke={isOvertime ? '#FF3D3D' : isLow ? '#FF9500' : '#00D4FF'} strokeWidth="8" strokeLinecap="round" strokeDasharray={2 * Math.PI * 54} strokeDashoffset={2 * Math.PI * 54 * (1 - pct)} style={{ transition: 'stroke-dashoffset 0.5s ease, stroke 0.3s' }} />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              {isOvertime ? (
-                <div className="text-danger text-xs font-mono mb-1 timer-pulse">OVERTIME</div>
-              ) : (
-                <div className="text-xs text-text-muted mb-1">restant</div>
-              )}
+              {isOvertime ? <div className="text-danger text-xs font-mono mb-1 timer-pulse">OVERTIME</div> : <div className="text-xs text-text-muted mb-1">restant</div>}
               <div className={`text-4xl font-bold font-mono tabular-nums ${isOvertime ? 'text-danger' : isLow ? 'text-warn' : ''}`}>
                 {isOvertime ? '+' : ''}{formatTime(isOvertime ? elapsed - circuit.timeCap : remaining)}
               </div>
@@ -123,12 +91,8 @@ function SimulationMode({ circuit, onClose }) {
           </div>
         )}
 
-        {/* Start/stop */}
         {phase === 'countdown' && !running && (
-          <button
-            onClick={() => setRunning(true)}
-            className="btn-primary text-lg px-10 py-4 rounded-2xl"
-          >
+          <button onClick={() => setRunning(true)} className="btn-primary text-lg px-10 py-4 rounded-2xl">
             Démarrer le circuit
           </button>
         )}
@@ -138,29 +102,19 @@ function SimulationMode({ circuit, onClose }) {
             <div className="text-4xl mb-2">🏆</div>
             <div className="text-xl font-bold text-success">Circuit terminé !</div>
             <div className="text-text-muted mt-1">{totalDone}/{circuit.exercises.length} stations · {formatTime(elapsed)}</div>
-            <button
-              onClick={() => { setElapsed(0); setRunning(false); setPhase('countdown'); setCountdown(3); setCompletedExs({}) }}
-              className="btn-primary mt-4"
-            >
+            <button onClick={() => { setElapsed(0); setRunning(false); setPhase('countdown'); setCountdown(3); setCompletedExs({}) }} className="btn-primary mt-4">
               Recommencer
             </button>
           </motion.div>
         )}
 
-        {/* Exercise checklist during run */}
         {(phase === 'running' || phase === 'done') && (
           <div className="w-full max-w-md space-y-2">
             <div className="label mb-2">Stations</div>
             {circuit.exercises.map((ex, i) => {
               const done = !!completedExs[i]
               return (
-                <button
-                  key={i}
-                  onClick={() => setCompletedExs(prev => ({ ...prev, [i]: !prev[i] }))}
-                  className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
-                    done ? 'bg-success/5 border-success/30' : 'glass border-border hover:border-text-faint'
-                  }`}
-                >
+                <button key={i} onClick={() => setCompletedExs(prev => ({ ...prev, [i]: !prev[i] }))} className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${done ? 'bg-success/5 border-success/30' : 'glass border-border hover:border-text-faint'}`}>
                   <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${done ? 'bg-success border-success' : 'border-text-faint'}`}>
                     {done && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>}
                   </div>
@@ -180,126 +134,171 @@ function SimulationMode({ circuit, onClose }) {
 }
 
 function CircuitCard({ circuit, onSimulate }) {
-  const [expanded, setExpanded] = useState(false)
+  const cardRef = useRef(null)
   const color = LEVEL_COLORS[circuit.level] || '#888'
-  const timeCap = circuit.timeCap
-  const mins = Math.floor(timeCap / 60)
+  const mins = Math.floor(circuit.timeCap / 60)
+  const [exporting, setExporting] = useState(false)
+
+  const handleExport = async () => {
+    if (!cardRef.current || exporting) return
+    setExporting(true)
+    try {
+      const canvas = await html2canvas(cardRef.current, {
+        backgroundColor: '#0D0D0D',
+        scale: 2,
+        useCORS: true,
+        logging: false,
+      })
+      const link = document.createElement('a')
+      link.download = `CBL_${circuit.name.replace(/[^a-zA-Z0-9]/g, '_')}.png`
+      link.href = canvas.toDataURL('image/png')
+      link.click()
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setExporting(false)
+    }
+  }
 
   return (
-    <motion.div layout className="glass rounded-2xl overflow-hidden">
+    <div className="w-full shrink-0 px-4">
+      {/* Visual card — exportable */}
       <div
-        className="p-5 cursor-pointer"
-        onClick={() => setExpanded(e => !e)}
+        ref={cardRef}
+        className="rounded-2xl overflow-hidden"
+        style={{
+          background: 'linear-gradient(160deg, #141414 0%, #0A0A0A 100%)',
+          border: `1px solid ${color}20`,
+          boxShadow: `0 0 48px ${color}06`,
+        }}
       >
-        {/* Card header */}
-        <div className="flex items-start gap-3">
-          <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-black font-bold text-sm"
-            style={{ backgroundColor: color }}
-          >
-            {mins}'
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-xs text-text-muted mb-0.5">{circuit.event}</div>
-            <div className="font-bold text-sm leading-tight">{circuit.name}</div>
-            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-              <span className="text-[10px] px-2 py-0.5 rounded border font-mono" style={{ color, borderColor: color + '40', backgroundColor: color + '10' }}>
-                {circuit.division}
-              </span>
-              <span className="text-[10px] text-text-muted">{circuit.exercises.length} stations</span>
-              <span className="text-[10px] font-mono text-text-muted">⏱ {mins}min</span>
-              {circuit.tag && (
-                <span className="text-[10px] text-text-faint">{circuit.tag}</span>
-              )}
+        {/* Color top bar */}
+        <div className="h-0.5 w-full" style={{ background: `linear-gradient(90deg, ${color}, transparent 70%)` }} />
+
+        {/* Header */}
+        <div className="px-5 pt-4 pb-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <div className="text-[10px] font-bold tracking-widest uppercase mb-1.5" style={{ color }}>
+                {LEVEL_LABELS[circuit.level]} · {circuit.division}
+              </div>
+              <div className="font-bold text-base leading-snug text-text-primary tracking-tight">
+                {circuit.name}
+              </div>
+              <div className="text-xs text-text-muted mt-0.5 truncate">{circuit.event}</div>
+            </div>
+            <div
+              className="w-12 h-12 rounded-xl flex flex-col items-center justify-center flex-shrink-0 font-bold text-black"
+              style={{ backgroundColor: color }}
+            >
+              <span className="text-xl leading-none font-bold">{mins}</span>
+              <span className="text-[9px] font-bold uppercase tracking-wider leading-tight">min</span>
             </div>
           </div>
-          <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
-          </motion.div>
+          {circuit.tag && (
+            <span
+              className="inline-block mt-2.5 text-[9px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full"
+              style={{ backgroundColor: color + '18', color }}
+            >
+              {circuit.tag}
+            </span>
+          )}
         </div>
 
-        {/* Quick exercises preview */}
-        {!expanded && (
-          <div className="mt-3 flex flex-wrap gap-1">
-            {circuit.exercises.slice(0, 4).map((ex, i) => (
-              <span key={i} className="text-[10px] bg-surface-2 border border-border rounded px-1.5 py-0.5 text-text-muted truncate max-w-[10rem]">
-                {ex.label}
-              </span>
-            ))}
-            {circuit.exercises.length > 4 && (
-              <span className="text-[10px] text-text-faint px-1">+{circuit.exercises.length - 4}</span>
-            )}
+        {/* Divider */}
+        <div className="mx-5 h-px bg-border" />
+
+        {/* Exercise list */}
+        <div className="px-5 py-4 space-y-2.5">
+          {circuit.exercises.map((ex, i) => (
+            <div key={i} className="flex items-start gap-3">
+              <div
+                className="w-5 h-5 rounded-full text-[10px] font-bold flex-shrink-0 flex items-center justify-center mt-0.5 tabular-nums"
+                style={{ backgroundColor: color + '15', color }}
+              >
+                {i + 1}
+              </div>
+              <div className="flex-1 text-sm leading-snug">
+                <span className="text-text-primary">{ex.label}</span>
+                {ex.weight && (
+                  <span className="ml-2 font-mono text-xs font-semibold" style={{ color: '#FF9500' }}>
+                    @{ex.weight}
+                  </span>
+                )}
+                {ex.note && (
+                  <div className="text-xs text-text-muted mt-0.5 italic">{ex.note}</div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Time cap */}
+        <div className="mx-5 mb-4">
+          <div
+            className="flex items-center justify-between px-4 py-2.5 rounded-xl"
+            style={{ backgroundColor: color + '0D', border: `1px solid ${color}20` }}
+          >
+            <div className="flex items-center gap-2">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round">
+                <path d="M5 3h14M5 21h14"/>
+                <path d="M7 3v3a5 5 0 0 0 10 0V3"/>
+                <path d="M7 21v-3a5 5 0 0 1 10 0v3"/>
+              </svg>
+              <span className="text-xs text-text-muted font-medium">Time Cap</span>
+            </div>
+            <span className="font-bold font-mono text-base tabular-nums" style={{ color }}>{mins}:00</span>
+          </div>
+        </div>
+
+        {circuit.catchUpLine && (
+          <div className="mx-5 mb-4 text-xs text-text-muted bg-surface-2 border border-border rounded-xl px-3 py-2 leading-relaxed">
+            <span className="font-semibold" style={{ color: '#FF9500' }}>Rattrapage · </span>
+            {circuit.catchUpLine}
           </div>
         )}
       </div>
 
-      {/* Expanded exercise list */}
-      <AnimatePresence>
-        {expanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            className="overflow-hidden"
-          >
-            <div className="px-5 pb-5 border-t border-border pt-4 space-y-4">
-              {circuit.catchUpLine && (
-                <div className="text-xs text-text-muted bg-surface-2 border border-border rounded-lg px-3 py-2">
-                  <span className="text-warn font-medium">Ligne de rattrapage: </span>
-                  {circuit.catchUpLine}
-                </div>
-              )}
-
-              {/* Exercise list */}
-              <ol className="space-y-2">
-                {circuit.exercises.map((ex, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <span
-                      className="w-5 h-5 rounded-full text-[10px] font-bold flex-shrink-0 flex items-center justify-center mt-0.5"
-                      style={{ backgroundColor: color + '20', color }}
-                    >
-                      {i + 1}
-                    </span>
-                    <div className="flex-1">
-                      <span className="text-sm">{ex.label}</span>
-                      {ex.weight && (
-                        <span className="text-xs font-mono text-warn/80 ml-2">@{ex.weight}</span>
-                      )}
-                      {ex.note && (
-                        <div className="text-xs text-text-muted italic mt-0.5">{ex.note}</div>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ol>
-
-              {/* Time cap */}
-              <div className="flex items-center justify-between py-2 border-t border-border">
-                <span className="text-sm font-semibold">Time Cap</span>
-                <span className="text-lg font-bold font-mono" style={{ color }}>{mins}:00</span>
-              </div>
-
-              {/* Simulate button */}
-              <button
-                onClick={() => onSimulate(circuit)}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all active:scale-98"
-                style={{ backgroundColor: color, color: '#000' }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                Simuler ce circuit
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
+      {/* Action buttons — outside exportable area */}
+      <div className="flex gap-2 mt-3">
+        <button
+          onClick={() => onSimulate(circuit)}
+          className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl font-semibold text-sm transition-all active:scale-95"
+          style={{ backgroundColor: color, color: '#000' }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+          Simuler
+        </button>
+        <button
+          onClick={handleExport}
+          disabled={exporting}
+          className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl font-medium text-sm border border-border text-text-muted transition-all active:scale-95 hover:border-text-faint hover:text-text-primary disabled:opacity-40"
+        >
+          {exporting ? (
+            <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0"/>
+            </svg>
+          ) : (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          )}
+          Exporter
+        </button>
+      </div>
+    </div>
   )
 }
 
 export default function Circuits() {
   const [filter, setFilter] = useState('all')
   const [simulatingCircuit, setSimulatingCircuit] = useState(null)
+  const [activeIndex, setActiveIndex] = useState(0)
+  const scrollRef = useRef(null)
 
   const filters = [
     { id: 'all', label: 'Tous' },
@@ -308,73 +307,137 @@ export default function Circuits() {
     { id: '5', label: 'Elite' },
   ]
 
-  const filtered = circuitsData.circuits.filter(c => {
-    if (filter === 'all') return true
-    return c.level === parseInt(filter)
-  })
+  const filtered = circuitsData.circuits.filter(c =>
+    filter === 'all' ? true : c.level === parseInt(filter)
+  )
+
+  useEffect(() => {
+    setActiveIndex(0)
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({ left: 0, behavior: 'instant' })
+    }
+  }, [filter])
+
+  const handleScroll = useCallback(() => {
+    if (!scrollRef.current) return
+    const { scrollLeft, clientWidth } = scrollRef.current
+    if (clientWidth > 0) setActiveIndex(Math.round(scrollLeft / clientWidth))
+  }, [])
+
+  const goTo = (index) => {
+    if (!scrollRef.current) return
+    scrollRef.current.scrollTo({
+      left: index * scrollRef.current.clientWidth,
+      behavior: 'smooth',
+    })
+  }
 
   return (
     <>
-      <div className="max-w-2xl mx-auto px-4 py-6 space-y-5 animate-fade-in">
-
+      <div className="animate-fade-in pb-6">
         {/* Header */}
-        <div>
+        <div className="px-4 pt-6 pb-4">
           <div className="label mb-1">Bibliothèque</div>
           <h1 className="text-2xl font-bold tracking-tight">Circuits CBL</h1>
           <p className="text-sm text-text-muted mt-1">
-            {circuitsData.circuits.length} circuits extraits des compétitions — du Amateur au Elite
+            {circuitsData.circuits.length} circuits · Amateur → Elite
           </p>
         </div>
 
-        {/* Legend */}
-        <div className="glass rounded-xl p-3 flex flex-wrap gap-3">
-          {Object.entries(LEVEL_LABELS).map(([level, label]) => (
-            <div key={level} className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: LEVEL_COLORS[level] }} />
-              <span className="text-xs text-text-muted">{label}</span>
+        {/* Filter + counter */}
+        <div className="px-4 pb-4">
+          <div className="flex items-center gap-2">
+            {filters.map(f => (
+              <button
+                key={f.id}
+                onClick={() => setFilter(f.id)}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold border transition-all active:scale-95 ${
+                  filter === f.id
+                    ? 'bg-brand text-black border-brand'
+                    : 'border-border text-text-muted hover:border-text-faint'
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+            <span className="ml-auto text-xs text-text-muted tabular-nums">
+              {activeIndex + 1}/{filtered.length}
+            </span>
+          </div>
+        </div>
+
+        {/* Carousel */}
+        <div
+          ref={scrollRef}
+          onScroll={handleScroll}
+          className="flex no-scrollbar"
+          style={{
+            overflowX: 'auto',
+            scrollSnapType: 'x mandatory',
+            WebkitOverflowScrolling: 'touch',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+          }}
+        >
+          {filtered.map(circuit => (
+            <div key={circuit.id} className="w-full shrink-0" style={{ scrollSnapAlign: 'start' }}>
+              <CircuitCard circuit={circuit} onSimulate={setSimulatingCircuit} />
             </div>
           ))}
         </div>
 
-        {/* Filters */}
-        <div className="flex gap-2 flex-wrap">
-          {filters.map(f => (
-            <button
-              key={f.id}
-              onClick={() => setFilter(f.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-                filter === f.id
-                  ? 'bg-brand text-black border-brand'
-                  : 'border-border text-text-muted hover:border-text-faint'
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
-          <span className="ml-auto text-xs text-text-muted self-center">{filtered.length} circuits</span>
+        {/* Pagination dots */}
+        {filtered.length > 1 && (
+          <div className="flex items-center justify-center gap-1.5 pt-4 pb-2">
+            {filtered.map((c, i) => (
+              <button
+                key={i}
+                onClick={() => goTo(i)}
+                className="transition-all duration-300 rounded-full"
+                style={{
+                  width: i === activeIndex ? 20 : 6,
+                  height: 6,
+                  backgroundColor: i === activeIndex
+                    ? (LEVEL_COLORS[filtered[i]?.level] || '#00D4FF')
+                    : '#2A2A2A',
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Desktop nav arrows */}
+        <div className="hidden md:flex items-center justify-center gap-4 pt-2 pb-4">
+          <button
+            onClick={() => goTo(Math.max(0, activeIndex - 1))}
+            disabled={activeIndex === 0}
+            className="p-2 rounded-xl border border-border text-text-muted hover:text-text-primary hover:border-text-faint transition disabled:opacity-20"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+          </button>
+          <span className="text-sm text-text-muted tabular-nums">{activeIndex + 1} / {filtered.length}</span>
+          <button
+            onClick={() => goTo(Math.min(filtered.length - 1, activeIndex + 1))}
+            disabled={activeIndex === filtered.length - 1}
+            className="p-2 rounded-xl border border-border text-text-muted hover:text-text-primary hover:border-text-faint transition disabled:opacity-20"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
         </div>
 
-        {/* Circuit cards */}
-        <div className="space-y-3">
-          {filtered.map(circuit => (
-            <CircuitCard
-              key={circuit.id}
-              circuit={circuit}
-              onSimulate={setSimulatingCircuit}
-            />
-          ))}
-        </div>
-
-        {/* Info box */}
-        <div className="glass rounded-xl p-4 border-l-2 border-warn">
-          <div className="text-xs text-warn font-semibold mb-1">Rappel objectif</div>
-          <div className="text-xs text-text-muted">
-            Ta prochaine étape : compléter le circuit <strong className="text-text-primary">OQ7 Amateur 1st Round</strong> en moins de 6 min sans pause. Ensuite viser le <strong className="text-text-primary">WOD Espoir</strong>.
+        {/* Objective reminder */}
+        <div className="mx-4 glass rounded-xl p-4 border-l-2 border-warn">
+          <div className="text-xs text-warn font-semibold mb-1">Objectif</div>
+          <div className="text-xs text-text-muted leading-relaxed">
+            Prochaine étape : finir <strong className="text-text-primary">OQ7 Amateur 1st Round</strong> en &lt;6 min. Ensuite viser le <strong className="text-text-primary">WOD Espoir</strong>.
           </div>
         </div>
       </div>
 
-      {/* Simulation overlay */}
       <AnimatePresence>
         {simulatingCircuit && (
           <SimulationMode

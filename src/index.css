@@ -63,6 +63,9 @@
   }
 }
 
+/* Scrollbar hidden utility */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
 /* Custom animations */
 @keyframes timer-pulse {
   0%, 100% { opacity: 1; }
