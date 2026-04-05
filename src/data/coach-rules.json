@@ -1,5 +1,5 @@
 {
-  "version": "1.0",
+  "version": "2.0",
   "available_weights": [0, 5, 10, 15, 20, 30],
   "weight_progression": {
     "muscleUp": { "b1": 0, "b2": 5, "b3": 10 },
@@ -38,10 +38,10 @@
       "trigger": {
         "rpe_min": 9,
         "circuit_completion_max": 80,
-        "keywords": ["crampe", "crampes", "brûle", "brûlait", "acide", "jambes lourdes", "bras morts"]
+        "keywords": ["crampe", "crampes", "brûle", "brûlait", "acide", "jambes lourdes", "bras morts", "brûlure", "lactique"]
       },
-      "coach_message": "La filière lactique était à bloc aujourd'hui. C'est normal à ce stade — ton système tampon n'est pas encore adapté au volume. Priorité semaine prochaine : récupération active J+1, et on ne force pas le circuit avant 48h.",
-      "conseil_cle": "Ajoute 2 min de récup passive entre les séries circuit cette semaine. Hydratation : 3L minimum le jour d'entraînement.",
+      "coach_message": "La filière lactique était à bloc. C'est normal à ce stade — ton système tampon s'adapte encore au volume CBL. Le corps ne peut pas s'adapter à un stimulus discontinu, alors la cohérence des prochains jours compte plus que l'intensité.",
+      "conseil_cle": "Récupération active J+1 obligatoire : 20 min mobilité + respiration. Pas de circuit avant 48h. Hydratation 3L minimum les jours d'entraînement.",
       "tag": "Récup prioritaire",
       "color": "danger"
     },
@@ -50,10 +50,10 @@
       "priority": 2,
       "trigger": {
         "delta_reps_min": 10,
-        "keywords": ["mieux", "plus facile", "progressé", "PR", "record", "facile", "fort"]
+        "keywords": ["mieux", "plus facile", "progressé", "PR", "record", "facile", "fort", "surpassé", "nouveau record", "perso"]
       },
-      "coach_message": "Belle adaptation neuromusculaire. Le corps commence à intégrer les patterns. Maintiens ce cap — c'est le signe qu'on peut charger légèrement le prochain bloc.",
-      "conseil_cle": "Test charge +5kg sur dips à la prochaine séance force. Ne touche pas encore au muscle-up lesté.",
+      "coach_message": "Belle adaptation neuromusculaire. La tension mécanique accumulée sur les semaines précédentes produit ses effets — c'est exactement le signal qu'on attendait pour charger légèrement le prochain bloc.",
+      "conseil_cle": "Test charge +5kg sur dips à la prochaine séance force. Ne touche pas encore au muscle-up lesté — consolide d'abord le volume au poids de corps.",
       "tag": "On charge",
       "color": "success"
     },
@@ -63,10 +63,10 @@
       "trigger": {
         "delta_reps_max": 2,
         "consecutive_weeks_min": 2,
-        "keywords": ["pareil", "stagne", "même résultat", "pas bougé", "bloqué"]
+        "keywords": ["pareil", "stagne", "même résultat", "pas bougé", "bloqué", "plateau", "rien", "aucun progrès"]
       },
-      "coach_message": "Deux semaines sans delta significatif. Ce n'est pas une régression — c'est une adaptation incomplète. Le corps a besoin d'un nouveau stimulus, pas plus de volume.",
-      "conseil_cle": "Change le tempo sur tractions cette semaine : descente en 4 secondes, pause 1s en bas. Le stimulus de tension excentric va relancer l'adaptation.",
+      "coach_message": "Deux semaines sans delta significatif. Ce n'est pas une régression — c'est une adaptation incomplète. La périodisation ondulante enseigne que le plateau est le signal de changer le stimulus, pas d'augmenter le volume.",
+      "conseil_cle": "Change le tempo sur tractions cette semaine : descente en 4 secondes, pause 1s en bas. La tension excentrique va relancer l'adaptation sans ajouter de charge.",
       "tag": "Nouveau stimulus",
       "color": "warn"
     },
@@ -75,10 +75,10 @@
       "priority": 4,
       "trigger": {
         "dips_completion_max": 70,
-        "keywords": ["dips", "triceps", "épaule", "poignet", "pas fini les dips"]
+        "keywords": ["dips", "triceps", "épaule", "poignet", "pas fini les dips", "dips dur", "dips difficile"]
       },
-      "coach_message": "Les dips sont le point limitant du circuit CBL pour toi. C'est la bonne nouvelle : c'est le mouvement le plus améliorable rapidement.",
-      "conseil_cle": "Rajoute 3×5 dips lestés +5kg en fin de séance force jusqu'au prochain test. Focus : amplitude complète, pas de rebond.",
+      "coach_message": "Les dips sont le point limitant du circuit CBL pour toi en ce moment. La bonne nouvelle : c'est le mouvement le plus améliorable rapidement avec une surcharge progressive bien dosée.",
+      "conseil_cle": "3×5 dips lestés +5kg en fin de séance force, amplitude complète, pas de rebond. En 3 semaines tu verras la différence sur le circuit.",
       "tag": "Point faible clé",
       "color": "warn"
     },
@@ -87,10 +87,10 @@
       "priority": 5,
       "trigger": {
         "muscleup_completion_max": 60,
-        "keywords": ["muscle-up", "muscle up", "transition", "pas passé", "bloqué en haut"]
+        "keywords": ["muscle-up", "muscle up", "transition", "pas passé", "bloqué en haut", "sortie", "MU"]
       },
-      "coach_message": "Le muscle-up bloque souvent à la transition, pas à la traction. La force de poignet et le timing du kip font 80% du travail à ce niveau.",
-      "conseil_cle": "Drill de transition : bande élastique légère, 5×3 strict. Travaille la sortie poitrine haute avant de rajouter des reps.",
+      "coach_message": "Le muscle-up bloque souvent à la transition, pas à la traction. Le timing du kip et la force de poignet font 80% du travail à ce niveau — c'est technique avant d'être une question de force brute.",
+      "conseil_cle": "Drill de transition avec bande élastique légère : 5×3 strict. Travaille la sortie poitrine haute avant d'augmenter les reps. 10 min en fin de séance force, 2× par semaine.",
       "tag": "Drill technique",
       "color": "brand"
     },
@@ -99,10 +99,10 @@
       "priority": 6,
       "trigger": {
         "consistency_min": 85,
-        "keywords": ["régulier", "toutes les séances", "pas raté", "présent", "discipline"]
+        "keywords": ["régulier", "toutes les séances", "pas raté", "présent", "discipline", "assidu", "constant"]
       },
-      "coach_message": "La régularité est la variable la plus prédictive du résultat en CBL. 85% de présence sur 4 semaines, c'est exactement ce qui sépare les athlètes qui progressent de ceux qui stagnent.",
-      "conseil_cle": "Continue ce rythme. Ne change rien à ta routine de récup — si ça marche, ne touche pas.",
+      "coach_message": "La régularité est la variable la plus prédictive du résultat en CBL. 85%+ de présence sur 4 semaines, c'est exactement ce qui sépare les athlètes qui progressent de ceux qui stagnent — la science du sport le confirme.",
+      "conseil_cle": "Continue ce rythme. Ne change rien à ta routine de récup — si ça marche, ne touche pas. La constance bât l'intensité sur 3 mois.",
       "tag": "Régularité top",
       "color": "success"
     },
@@ -111,10 +111,10 @@
       "priority": 7,
       "trigger": {
         "consistency_max": 60,
-        "keywords": ["raté", "manqué", "pas pu", "absent", "skip"]
+        "keywords": ["raté", "manqué", "pas pu", "absent", "skip", "sauté", "pas fait"]
       },
-      "coach_message": "En dessous de 60% de présence, le plan perd sa cohérence. Le corps ne peut pas s'adapter à un stimulus discontinu. Ça n'est pas un jugement — c'est la physiologie.",
-      "conseil_cle": "Identifie le vrai obstacle (temps, fatigue, motivation) et on adapte. Un plan sur 4 séances/sem réalisé à 100% bat un plan sur 6 séances réalisé à 50%.",
+      "coach_message": "En dessous de 60% de présence, le corps ne reçoit pas de stimulus suffisamment régulier pour s'adapter. Un plan sur 4 séances réalisé à 100% bat toujours un plan sur 6 séances réalisé à 50%.",
+      "conseil_cle": "Identifie le vrai obstacle et adapte : temps, fatigue, motivation ? Un programme réaliste que tu tiens vaut mieux qu'un programme parfait que tu sautes.",
       "tag": "Régularité à revoir",
       "color": "danger"
     },
@@ -123,10 +123,10 @@
       "priority": 8,
       "trigger": {
         "circuit_completion_max": 75,
-        "keywords": ["pas fini", "incomplet", "arrêté", "n'ai pas terminé", "limite de temps"]
+        "keywords": ["pas fini", "incomplet", "arrêté", "n'ai pas terminé", "limite de temps", "time cap"]
       },
-      "coach_message": "Ne pas finir un circuit n'est pas un échec — c'est une info. Ça indique exactement où le système énergétique lâche. Sur la séquence CBL, c'est en général à 70-75% qu'apparaît le mur lactique.",
-      "conseil_cle": "La prochaine fois, split le circuit en 2 blocs avec 90s de récup au milieu. Objectif : compléter à 100%. Puis on réduit la pause progressivement.",
+      "coach_message": "Ne pas finir un circuit n'est pas un échec — c'est une information précise. Sur la séquence CBL, le mur lactique apparaît en général à 70-75% du circuit. Tu viens d'identifier exactement où ton système énergétique lâche.",
+      "conseil_cle": "La prochaine fois, split le circuit en 2 blocs avec 90s de récup au milieu. Objectif : compléter à 100%. Puis réduis la pause de 15s par semaine.",
       "tag": "Stratégie circuit",
       "color": "warn"
     },
@@ -136,10 +136,10 @@
       "trigger": {
         "circuit_time_min": 330,
         "circuit_time_max": 380,
-        "keywords": ["juste", "limite", "tout juste", "5 min", "serré"]
+        "keywords": ["juste", "limite", "tout juste", "5 min", "serré", "5:30", "5:40", "5:50"]
       },
-      "coach_message": "Tu es dans la zone de confort du circuit CBL amateur (5'30–6'00). C'est le bon signe : tu complètes, mais tu es à la limite. C'est là que l'adaptation est maximale.",
-      "conseil_cle": "Cible -15s par semaine. Pas en allant plus vite — en réduisant les micro-pauses entre stations.",
+      "coach_message": "Tu es dans la zone cible du circuit CBL amateur (5'30–6'00). C'est là que l'adaptation est maximale : tu complètes, mais tu es à la limite. C'est exactement la zone de confort inconfortable qu'on cherche.",
+      "conseil_cle": "Cible -15s par semaine. Pas en allant plus vite — en réduisant les micro-pauses entre stations. L'économie de mouvement fait gagner plus de temps que la vitesse d'exécution.",
       "tag": "Zone cible",
       "color": "success"
     },
@@ -148,10 +148,10 @@
       "priority": 10,
       "trigger": {
         "rpe_min": 9.5,
-        "keywords": ["épuisé", "crevé", "plus rien", "vide", "mort"]
+        "keywords": ["épuisé", "crevé", "plus rien", "vide", "mort", "à bout", "fini"]
       },
-      "coach_message": "RPE 9.5–10 sur une séance standard = signal de surcharge aiguë. Ce n'est pas une séance record, c'est ton corps qui dit stop.",
-      "conseil_cle": "Séance suivante en récup active : 20 min de mobilité + travail respiratoire. Aucune séance intense avant 48h minimum.",
+      "coach_message": "RPE 9.5–10 sur une séance standard, c'est ton corps qui signale une surcharge aiguë. La science de l'entraînement est claire : forcer au-delà de ce seuil sans récup adéquate augmente significativement le risque de blessure et de régression.",
+      "conseil_cle": "Séance suivante : récup active uniquement — 20 min mobilité + respiration. Aucune séance intense avant 48h. Sommeil 8h minimum cette nuit.",
       "tag": "Surcharge aiguë",
       "color": "danger"
     },
@@ -160,10 +160,10 @@
       "priority": 11,
       "trigger": {
         "rpe_max": 5,
-        "keywords": ["trop facile", "pas fatigué", "rien senti", "léger", "cool"]
+        "keywords": ["trop facile", "pas fatigué", "rien senti", "léger", "cool", "sans effort"]
       },
-      "coach_message": "RPE < 5 sur une séance de charge = sous-stimulation. Le corps n'a pas de raison de s'adapter si le stimulus est insuffisant.",
-      "conseil_cle": "Monte d'un cran : réduire les temps de récup de 20%, ou ajouter une série de chaque mouvement clé.",
+      "coach_message": "RPE < 5 sur une séance de charge = sous-stimulation. Le corps a besoin d'une tension mécanique suffisante pour déclencher l'adaptation. Sans ce stimulus, pas de progression — c'est la physiologie de base.",
+      "conseil_cle": "Monte d'un cran : réduire les temps de récup de 20%, ou ajouter une série sur chaque mouvement clé. Le stimulus doit être inconfortable pour être efficace.",
       "tag": "Charge à augmenter",
       "color": "brand"
     },
@@ -172,10 +172,10 @@
       "priority": 12,
       "trigger": {
         "pullup_completion_max": 65,
-        "keywords": ["tractions", "dos", "épuisé en traction", "bras pompés tractions"]
+        "keywords": ["tractions", "dos", "épuisé en traction", "bras pompés tractions", "traction fatigue", "dos crampe"]
       },
-      "coach_message": "Les tractions sont la fondation du circuit CBL. Si elles lâchent en premier, tout le reste s'effondre — le muscle-up devient impossible, le rythme du circuit est cassé.",
-      "conseil_cle": "Travail spécifique : 5×3 tractions lestées +10kg, repos 3 min entre séries. L'endurance de traction se construit avec l'intensité d'abord, pas le volume.",
+      "coach_message": "Les tractions sont la fondation du circuit CBL. Si elles lâchent en premier, le muscle-up devient impossible et le rythme du circuit s'effondre. L'endurance de traction se construit avec l'intensité d'abord, pas le volume.",
+      "conseil_cle": "5×3 tractions lestées +10kg, repos 3 min entre séries. Priorité sur ce mouvement les 2 prochaines semaines avant d'augmenter quoi que ce soit d'autre.",
       "tag": "Fondation à renforcer",
       "color": "warn"
     },
@@ -184,10 +184,10 @@
       "priority": 13,
       "trigger": {
         "push_pull_ratio_min": 1.5,
-        "keywords": ["dips plus fort que tractions", "pompes faciles tractions dures"]
+        "keywords": ["dips plus fort que tractions", "pompes faciles tractions dures", "déséquilibré", "push plus fort"]
       },
-      "coach_message": "Ratio push/pull déséquilibré en faveur du push. À court terme ça semble une force — à la compétition, ça deviendra une limite quand le dos s'épuise avant les pecs.",
-      "conseil_cle": "Pour les 2 prochaines semaines : volume traction x1.5, volume poussée maintenu. L'équilibre est un facteur de performance CBL.",
+      "coach_message": "Ratio push/pull déséquilibré en faveur du push. À la compétition CBL, c'est le dos qui lâche en premier quand le déséquilibre est trop marqué — le muscle-up devient impossible dès la 3e répétition.",
+      "conseil_cle": "2 prochaines semaines : volume traction ×1.5, volume poussée maintenu. L'équilibre push/pull n'est pas esthétique — c'est un facteur de performance direct.",
       "tag": "Rééquilibrage",
       "color": "warn"
     },
@@ -197,10 +197,10 @@
       "trigger": {
         "delta_reps_min": 3,
         "delta_reps_max": 9,
-        "keywords": ["un peu mieux", "légèrement", "progrès", "avance"]
+        "keywords": ["un peu mieux", "légèrement", "progrès", "avance", "amélioration", "meilleur"]
       },
-      "coach_message": "Progression modérée mais constante. C'est exactement le profil d'adaptation saine sur un plan de 3 mois. Les gains exponentiels sont rares — accumule les petites victoires.",
-      "conseil_cle": "Maintiens le rythme. Pas de changement majeur — l'erreur classique à ce stade est de vouloir accélérer et de sucharger.",
+      "coach_message": "Progression modérée et constante — c'est le profil d'adaptation sain sur un plan de 3 mois. Les gains exponentiels sont rares. Accumule les petites victoires : +3 reps semaine après semaine, c'est +36 reps en 3 mois.",
+      "conseil_cle": "Maintiens le rythme. L'erreur classique à ce stade est de vouloir accélérer. La surcharge progressive est une science de la patience.",
       "tag": "Progression saine",
       "color": "success"
     },
@@ -209,10 +209,10 @@
       "priority": 15,
       "trigger": {
         "rpe_delta_max": -1,
-        "keywords": ["bien récupéré", "frais", "reposé", "forme", "plein d'énergie"]
+        "keywords": ["bien récupéré", "frais", "reposé", "forme", "plein d'énergie", "top forme"]
       },
-      "coach_message": "La récupération est une compétence. Sentir la forme après une séance chargée signifie que ton timing de récup est bon — c'est une adaptation physiologique à part entière.",
-      "conseil_cle": "Continue le protocole récup actuel. Note ce que tu as fait différemment cette semaine pour reproduire.",
+      "coach_message": "La récupération est une compétence à part entière. Sentir la forme après une semaine chargée signifie que ton protocole de récup fonctionne — c'est une adaptation physiologique aussi importante que la progression en force.",
+      "conseil_cle": "Note ce que tu as fait différemment cette semaine pour reproduire. Sommeil, alimentation, stress ? Identifie la variable et capitalise dessus.",
       "tag": "Récup optimale",
       "color": "success"
     },
@@ -221,10 +221,10 @@
       "priority": 16,
       "trigger": {
         "weeks_to_comp_max": 4,
-        "keywords": ["compétition", "bientôt", "dernières semaines", "peaking"]
+        "keywords": ["compétition", "bientôt", "dernières semaines", "peaking", "qualifier", "CBL Open"]
       },
-      "coach_message": "À 4 semaines de la compét, on entre dans la phase de taper. Le travail de fond est fait — maintenant on affine la fraîcheur musculaire et la confiance. Moins c'est plus.",
-      "conseil_cle": "Volume -30%, intensité maintenue. 1 simulation complète par semaine en conditions réelles. Sommeil : 8h minimum.",
+      "coach_message": "À 4 semaines de la compét, on entre en phase de taper. Le travail de fond est fait — maintenant on affine la fraîcheur neuromusculaire et la confiance. Les études sur la préparation compétitive sont unanimes : moins c'est plus dans cette phase.",
+      "conseil_cle": "Volume -30%, intensité maintenue. 1 simulation complète par semaine en conditions réelles. Sommeil 8h minimum. Aucun PR cette dernière semaine.",
       "tag": "Mode compét",
       "color": "danger"
     },
@@ -233,10 +233,10 @@
       "priority": 17,
       "trigger": {
         "week_type": "deload",
-        "keywords": ["déload", "récup", "semaine légère"]
+        "keywords": ["déload", "récup", "semaine légère", "repos"]
       },
-      "coach_message": "La semaine de déload est souvent celle qui fait le plus peur aux athlètes motivés — et pourtant c'est là que le corps consolide les adaptations des 3 semaines précédentes.",
-      "conseil_cle": "Volume à 50%, intensité à 60%. Pas de PR cette semaine. Travail technique et mobilité prioritaires.",
+      "coach_message": "La semaine de déload est celle qui fait le plus peur aux athlètes motivés — et c'est là que le corps consolide les adaptations. Sans déload, les super-compensations n'ont pas lieu. C'est une partie du plan, pas une faiblesse.",
+      "conseil_cle": "Volume à 50%, intensité à 60%. Pas de PR. Travail technique et mobilité en priorité. Utilise cette semaine pour corriger les défauts de forme.",
       "tag": "Déload",
       "color": "brand"
     },
@@ -245,12 +245,100 @@
       "priority": 18,
       "trigger": {
         "first_complete_circuit": true,
-        "keywords": ["premier circuit", "fini pour la première fois", "première fois complet"]
+        "keywords": ["premier circuit", "fini pour la première fois", "première fois complet", "première fois terminé"]
       },
-      "coach_message": "Premier circuit complété. C'est une donnée physiologique concrète : ton système lactique supporte maintenant le volume d'un circuit CBL amateur complet. C'est le cap le plus difficile.",
-      "conseil_cle": "Mémorise les sensations de cette séance — la gestion de l'effort, le rythme entre stations. C'est ton référentiel compétition.",
+      "coach_message": "Premier circuit complété. C'est une donnée physiologique concrète : ton système lactique supporte maintenant le volume d'un circuit CBL amateur complet. C'est le cap le plus difficile — tout s'accélère à partir d'ici.",
+      "conseil_cle": "Mémorise les sensations : la gestion de l'effort, le rythme entre stations, le moment où ça a basculé. C'est ton référentiel compétition. Tu devras retrouver cet état en conditions réelles.",
       "tag": "Jalon franchi",
       "color": "success"
+    },
+    "nutrition_sèche": {
+      "id": "nutrition_sèche",
+      "priority": 19,
+      "trigger": {
+        "keywords": ["sèche", "poids", "perdre du poids", "maigrir", "alimentation", "manger", "nutrition", "masse", "gras"]
+      },
+      "coach_message": "En phase de préparation compétitive, la nutrition est aussi importante que l'entraînement. Un déficit calorique trop agressif en phase de charge = perte de force et de récup. L'objectif n'est pas de peser moins — c'est d'être plus léger à force égale.",
+      "conseil_cle": "Déficit maximum -10 à -15% des calories de maintenance. Protéines : 1.6–2.2g/kg de poids corporel. Post-séance : protéines + glucides dans les 30 min. Ne pas sauter ce repas.",
+      "tag": "Nutrition",
+      "color": "brand"
+    },
+    "emom_suggestion": {
+      "id": "emom_suggestion",
+      "priority": 20,
+      "trigger": {
+        "keywords": ["endurance", "tenir dans la durée", "cardio", "souffle", "essoufflé", "pas assez d'endurance", "fatigue rapide"]
+      },
+      "coach_message": "L'endurance musculaire spécifique au CBL se construit avec des méthodes EMOM (Every Minute On the Minute). Cette méthode est idéale pour augmenter la capacité à enchaîner des reps dans la durée — exactement ce que demande un circuit.",
+      "conseil_cle": "Test EMOM : 10 dips par minute pendant 8 min au poids du corps. Si tu n'arrives pas à tenir, c'est ton objectif de base. Si tu tiens facilement, monte à 12 reps/minute.",
+      "tag": "Endurance musculaire",
+      "color": "brand"
+    },
+    "technique_excentrique": {
+      "id": "technique_excentrique",
+      "priority": 21,
+      "trigger": {
+        "keywords": ["tempo", "excentrique", "lent", "contrôle", "descente", "contrôlé"]
+      },
+      "coach_message": "La phase excentrique (descente) est la plus productive pour l'hypertrophie et la force. Réduire la vitesse de descente — même sans changer la charge — augmente significativement le temps sous tension et le stimulus d'adaptation.",
+      "conseil_cle": "Cette semaine : descente en 3-4 secondes sur tous tes mouvements de traction et de poussée. C'est inconfortable. C'est exactement pour ça que ça marche.",
+      "tag": "Tension excentrique",
+      "color": "brand"
+    },
+    "surmenage_signe": {
+      "id": "surmenage_signe",
+      "priority": 22,
+      "trigger": {
+        "keywords": ["mal dormi", "fatigue chronique", "toujours fatigué", "pas récupéré", "encore fatigué", "sommeil mauvais", "stress"]
+      },
+      "coach_message": "La fatigue chronique est le signal d'alarme le plus sous-estimé en calisthenics. Le ratio charge aiguë/charge chronique (ACWR) est un prédicteur fiable de blessure : si ta charge récente dépasse de plus de 30% ta charge habituelle, le risque augmente.",
+      "conseil_cle": "Réduis le volume de 30% cette semaine. Priorise le sommeil (8h minimum). Sans récupération adéquate, chaque séance détériore plus qu'elle ne construit.",
+      "tag": "Surmenage détecté",
+      "color": "danger"
+    },
+    "force_maximale": {
+      "id": "force_maximale",
+      "priority": 23,
+      "trigger": {
+        "keywords": ["force max", "1RM", "maximum", "charge maximale", "tester", "max", "lourd"]
+      },
+      "coach_message": "La force maximale se développe dans les plages 4-6 reps avec des charges élevées et des repos longs (3-5 min). Dans le contexte CBL, un ratio de 2-3 séances force pour 1 séance circuit maintient la balance optimale pour la compétition.",
+      "conseil_cle": "Séance force : 5×3 tractions lestées au maximum gérable + 5×3 dips lestés. Repos complet entre séries. Ne pas mixer avec du circuit le même jour.",
+      "tag": "Force pure",
+      "color": "brand"
+    },
+    "mobilite_souplesse": {
+      "id": "mobilite_souplesse",
+      "priority": 24,
+      "trigger": {
+        "keywords": ["raide", "raideur", "mobilité", "souplesse", "articulaire", "épaule raide", "poignet douloureux", "douleur légère"]
+      },
+      "coach_message": "La mobilité articulaire est un facteur de performance direct en calisthenics — les épaules raides limitent l'amplitude du muscle-up et augmentent le risque de blessure au poignet. Ce n'est pas optionnel.",
+      "conseil_cle": "10 min de mobilité d'épaule chaque matin : rotations internes/externes avec bande, dislocations de barre. Et avant chaque séance : 5 min activation scapulaire.",
+      "tag": "Mobilité",
+      "color": "warn"
+    },
+    "specificity_comp": {
+      "id": "specificity_comp",
+      "priority": 25,
+      "trigger": {
+        "keywords": ["conditions réelles", "simulation", "pression", "stress compétition", "trac", "public", "nerveux"]
+      },
+      "coach_message": "La spécificité est un principe fondamental : l'entraînement doit reproduire les conditions de compétition — même fatigue, même ordre des exercices, même pression temporelle. Le stress nerveux en compétition se gère avec des expositions répétées, pas avec de la préparation mentale seule.",
+      "conseil_cle": "1 séance simulation par semaine à partir de la semaine 6 : timer, ordre exact du circuit CBL, objectif de performance. Traite-la comme une vraie compétition.",
+      "tag": "Spécificité compét",
+      "color": "danger"
+    },
+    "semaine_volume_eleve": {
+      "id": "semaine_volume_eleve",
+      "priority": 26,
+      "trigger": {
+        "keywords": ["volume élevé", "beaucoup de séances", "semaine chargée", "intensif", "surcharge programmée"]
+      },
+      "coach_message": "Les semaines de volume élevé sont intentionnelles dans le plan — elles créent la fatigue qui précède la super-compensation. La progression n'est pas linéaire : tu dois parfois reculer pour mieux avancer.",
+      "conseil_cle": "Hydratation et sommeil ne sont pas négociables cette semaine. Alimentation : augmente les glucides les jours d'entraînement pour soutenir le volume.",
+      "tag": "Bloc de volume",
+      "color": "brand"
     }
   }
 }

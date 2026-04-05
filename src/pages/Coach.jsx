@@ -150,10 +150,8 @@ export default function Coach() {
   return (
     <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-text-primary">Coach</h1>
-        <p className="text-text-muted text-sm mt-1">
-          Analyse locale — zéro API. Réponses basées sur 18 scénarios CBL réels.
-        </p>
+        <h1 className="text-2xl font-bold tracking-tight text-text-primary">Coach Claude</h1>
+        <p className="text-text-muted text-sm mt-1">Ton coach personnel CBL. Décris ta séance, reçois un retour.</p>
       </div>
 
       {/* Tabs */}

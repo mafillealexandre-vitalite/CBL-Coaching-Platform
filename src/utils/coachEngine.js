@@ -1,30 +1,64 @@
 import rules from '../data/coach-rules.json'
 
 const KEYWORDS_WEIGHTS = {
+  // Fatigue lactique
   crampe: 'fatigue_lactique_haute', crampes: 'fatigue_lactique_haute',
   brûle: 'fatigue_lactique_haute', brûlait: 'fatigue_lactique_haute',
   acide: 'fatigue_lactique_haute', 'jambes lourdes': 'fatigue_lactique_haute',
-  'bras morts': 'fatigue_lactique_haute',
+  'bras morts': 'fatigue_lactique_haute', brûlure: 'fatigue_lactique_haute',
+  lactique: 'fatigue_lactique_haute',
+  // Progression forte
   mieux: 'progression_forte', 'plus facile': 'progression_forte',
   progressé: 'progression_forte', fort: 'progression_forte',
-  facile: 'rpe_trop_bas',
+  pr: 'progression_forte', record: 'progression_forte',
+  surpassé: 'progression_forte', 'nouveau record': 'progression_forte',
+  // Stagnation
   pareil: 'stagnation', stagne: 'stagnation', bloqué: 'stagnation',
+  plateau: 'stagnation', 'pas bougé': 'stagnation', 'aucun progrès': 'stagnation',
+  // Dips
   dips: 'dips_faiblesse', triceps: 'dips_faiblesse',
+  'dips dur': 'dips_faiblesse', 'dips difficile': 'dips_faiblesse',
+  // Muscle-up
   'muscle-up': 'muscleup_blockage', 'muscle up': 'muscleup_blockage',
-  transition: 'muscleup_blockage',
+  transition: 'muscleup_blockage', mu: 'muscleup_blockage',
+  // Pull
   tractions: 'pullup_faiblesse', dos: 'pullup_faiblesse',
+  'dos crampe': 'pullup_faiblesse', 'bras pompés tractions': 'pullup_faiblesse',
+  // Régularité
   régulier: 'bonne_regularite', discipline: 'bonne_regularite',
+  assidu: 'bonne_regularite', constant: 'bonne_regularite',
   raté: 'regularite_faible', manqué: 'regularite_faible', skip: 'regularite_faible',
+  sauté: 'regularite_faible', 'pas fait': 'regularite_faible',
+  // Circuit
   'pas fini': 'circuit_incomplet', incomplet: 'circuit_incomplet',
-  arrêté: 'circuit_incomplet',
+  arrêté: 'circuit_incomplet', 'time cap': 'circuit_incomplet',
   juste: 'circuit_temps_limite', limite: 'circuit_temps_limite',
+  // RPE
   épuisé: 'rpe_tres_eleve', crevé: 'rpe_tres_eleve', vide: 'rpe_tres_eleve',
-  'trop facile': 'rpe_trop_bas', léger: 'rpe_trop_bas',
+  'à bout': 'rpe_tres_eleve', fini: 'rpe_tres_eleve',
+  'trop facile': 'rpe_trop_bas', léger: 'rpe_trop_bas', 'sans effort': 'rpe_trop_bas',
+  // Progression modérée
   'un peu mieux': 'progression_moderee', progrès: 'progression_moderee',
-  reposé: 'bonne_recuperation', frais: 'bonne_recuperation',
+  amélioration: 'progression_moderee', meilleur: 'progression_moderee',
+  // Récup
+  reposé: 'bonne_recuperation', frais: 'bonne_recuperation', 'top forme': 'bonne_recuperation',
+  // Compét
   compétition: 'peaking_approche', bientôt: 'peaking_approche',
-  déload: 'deload_actif',
+  qualifier: 'peaking_approche', 'cbl open': 'peaking_approche',
+  // Déload
+  déload: 'deload_actif', 'semaine légère': 'deload_actif',
+  // Premier circuit
   'premier circuit': 'premier_circuit_complete',
+  // Nouveaux
+  sèche: 'nutrition_sèche', poids: 'nutrition_sèche', alimentation: 'nutrition_sèche',
+  manger: 'nutrition_sèche', nutrition: 'nutrition_sèche',
+  endurance: 'emom_suggestion', cardio: 'emom_suggestion', essoufflé: 'emom_suggestion',
+  tempo: 'technique_excentrique', excentrique: 'technique_excentrique', lent: 'technique_excentrique',
+  'mal dormi': 'surmenage_signe', 'toujours fatigué': 'surmenage_signe',
+  'fatigue chronique': 'surmenage_signe', stress: 'surmenage_signe',
+  'force max': 'force_maximale', maximum: 'force_maximale', lourd: 'force_maximale',
+  raide: 'mobilite_souplesse', mobilité: 'mobilite_souplesse', 'épaule': 'mobilite_souplesse',
+  simulation: 'specificity_comp', 'conditions réelles': 'specificity_comp', pression: 'specificity_comp',
 }
 
 /**
