@@ -1,0 +1,25 @@
+{
+  "name": "Alexandre Mafille",
+  "nickname": "Alex",
+  "goal": "Niveau Espoir (Div 3) CBL",
+  "nextCompetition": "CBL Open Qualifier 2026",
+  "competitionDate": "2026-09-01",
+  "startDate": "2026-04-07",
+  "maxes": {
+    "pullUp": { "value": 23, "unit": "reps", "label": "Tractions" },
+    "muscleUp": { "value": 7, "unit": "reps", "label": "Muscle-up" },
+    "dips": { "value": 30, "unit": "reps", "label": "Dips" },
+    "pushUp": { "value": 52, "unit": "reps", "label": "Pompes" },
+    "gobletSquat": { "value": 30, "unit": "reps @ 15kg", "label": "Goblet Squat" }
+  },
+  "targets3months": {
+    "pullUp": { "value": 30, "label": "Tractions" },
+    "muscleUp": { "value": 12, "label": "Muscle-up" },
+    "dips": { "value": 40, "label": "Dips" },
+    "pushUp": { "value": 65, "label": "Pompes" },
+    "gobletSquat": { "value": 40, "unit": "reps @ 16kg", "label": "Goblet Squat" }
+  },
+  "weakPoint": "Accumulation lactique rapide en circuit",
+  "context": "Enseignant EPS. Première CBL perdue en pool: Set1 en 5'24 sur 6', Set2 non terminé.",
+  "defaultWeeklyAvailability": [1, 2, 4, 5, 6]
+}

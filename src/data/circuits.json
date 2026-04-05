@@ -1,0 +1,227 @@
+{
+  "circuits": [
+    {
+      "id": "premiers-pas-t1",
+      "name": "Premiers Pas — 1er Tour",
+      "division": "Amateur (Div 4)",
+      "event": "CBL Premiers Pas 2025",
+      "timeCap": 360,
+      "level": 1,
+      "tag": "ATLAS",
+      "exercises": [
+        { "label": "10 Single Bar Dips + 5 Pull-up", "note": "UNBOXED" },
+        { "label": "10 Dips", "weight": "10kg" },
+        { "label": "15 Push-up" },
+        { "label": "15 Gobelet Squat", "weight": "16kg" },
+        { "label": "1 Muscle-up OU 5 Chest Pull-up" },
+        { "label": "5 Pull-up" },
+        { "label": "15 Push-up" },
+        { "label": "15 Gobelet Squat", "weight": "16kg" }
+      ],
+      "catchUpLine": "3 Single Bar Dips + 5 Pull-up (si hors temps)"
+    },
+    {
+      "id": "premiers-pas-t2",
+      "name": "Premiers Pas — 2e Tour",
+      "division": "Amateur (Div 4)",
+      "event": "CBL Premiers Pas 2025",
+      "timeCap": 360,
+      "level": 1,
+      "tag": "ATLAS",
+      "exercises": [
+        { "label": "1 Pull-up + 1 Muscle-up OU 5 Chest Pull-Up" },
+        { "label": "15 Pull-up + 5 Dips", "weight": "20kg" },
+        { "label": "10 Pull-up + 10 Dips", "weight": "10kg" },
+        { "label": "5 Pull-up + 15 Dips" },
+        { "label": "15 Gobelet Squat", "weight": "15kg" },
+        { "label": "20 Push-up" },
+        { "label": "1 Muscle-up OU 5 Chest Pull-Up" }
+      ]
+    },
+    {
+      "id": "premiers-pas-qf",
+      "name": "Premiers Pas — Quart de Finale",
+      "division": "Amateur (Div 4)",
+      "event": "CBL Premiers Pas 2025",
+      "timeCap": 420,
+      "level": 1,
+      "tag": "ATLAS",
+      "exercises": [
+        { "label": "3 Muscle-up" },
+        { "label": "10 Dips + 10 Dips + 10 Dips", "weight": "28kg au centre" },
+        { "label": "2 Muscle-up" },
+        { "label": "15 Gobelet Squat + 20 Push-up", "weight": "16kg" },
+        { "label": "1 Muscle-up" },
+        { "label": "10 Pull-up" }
+      ]
+    },
+    {
+      "id": "oq7-ama-r1",
+      "name": "Open Qualifier #7 — Amateur 1st Round",
+      "division": "Amateur",
+      "event": "CBL Open Qualifier #7 Paris 2026",
+      "timeCap": 360,
+      "level": 2,
+      "tag": "Paris 2026",
+      "exercises": [
+        { "label": "1 Muscle-up + 10 Push-up", "note": "5 Chest Pull = 1 MU" },
+        { "label": "1 Muscle-up + 15 Push-up" },
+        { "label": "1 Muscle-up + 20 Push-up" },
+        { "label": "6 Pull-up + 6 Goblet Squat", "weight": "16kg" },
+        { "label": "8 Pull-up + 9 Goblet Squat", "weight": "16kg" },
+        { "label": "10 Pull-up + 12 Goblet Squat", "weight": "16kg" },
+        { "label": "8 Pull-up + 9 Goblet Squat", "weight": "16kg" },
+        { "label": "6 Pull-up + 6 Goblet Squat", "weight": "16kg" }
+      ]
+    },
+    {
+      "id": "oq7-ama-r2",
+      "name": "Open Qualifier #7 — Amateur 2nd Round",
+      "division": "Amateur",
+      "event": "CBL Open Qualifier #7 Paris 2026",
+      "timeCap": 360,
+      "level": 2,
+      "tag": "Paris 2026",
+      "exercises": [
+        { "label": "5 Chest Pull-up", "weight": "5kg" },
+        { "label": "1 Muscle-up", "note": "5 Chest Pull = 1 MU" },
+        { "label": "15 Dips" },
+        { "label": "12 Dips", "weight": "10kg" },
+        { "label": "9 Dips", "weight": "20kg" },
+        { "label": "12 Pull-up" },
+        { "label": "9 Pull-up", "weight": "5kg" },
+        { "label": "6 Pull-up", "weight": "10kg" },
+        { "label": "3 Pull-up", "weight": "15kg" }
+      ]
+    },
+    {
+      "id": "oq7-ama-hf",
+      "name": "Open Qualifier #7 — Amateur ½ Finale",
+      "division": "Amateur",
+      "event": "CBL Open Qualifier #7 Paris 2026",
+      "timeCap": 480,
+      "level": 3,
+      "tag": "Paris 2026",
+      "exercises": [
+        { "label": "3 Muscle-up" },
+        { "label": "40 Push-up" },
+        { "label": "2 Muscle-up" },
+        { "label": "20 Goblet Squat", "weight": "16kg" },
+        { "label": "1 Muscle-up" },
+        { "label": "20 Dips", "weight": "15kg" },
+        { "label": "2 Muscle-up" },
+        { "label": "20 Goblet Squat", "weight": "16kg" },
+        { "label": "3 Muscle-up" },
+        { "label": "20 Pull-up" }
+      ]
+    },
+    {
+      "id": "oq7-ama-finale",
+      "name": "Open Qualifier #7 — Amateur Finale",
+      "division": "Amateur",
+      "event": "CBL Open Qualifier #7 Paris 2026",
+      "timeCap": 600,
+      "level": 3,
+      "tag": "Paris 2026",
+      "exercises": [
+        { "label": "[1 Pull-up + 1 Muscle-up] x3" },
+        { "label": "20 Push-up" },
+        { "label": "12 Pull-up" },
+        { "label": "15 Goblet Squat", "weight": "16kg" },
+        { "label": "[1 Pull-up + 1 Muscle-up] x2" },
+        { "label": "15 Dips", "weight": "15kg" },
+        { "label": "8 Pull-up", "weight": "10kg" },
+        { "label": "15 Goblet Squat", "weight": "16kg" },
+        { "label": "[1 Pull-up + 1 Muscle-up]" },
+        { "label": "8 Dips", "weight": "30kg" },
+        { "label": "4 Pull-up", "weight": "20kg" },
+        { "label": "15 Goblet Squat", "weight": "16kg" }
+      ]
+    },
+    {
+      "id": "oq7-elite-finale",
+      "name": "Open Qualifier #7 — Elite Finale",
+      "division": "Elite (Div 1)",
+      "event": "CBL Open Qualifier #7 Paris 2026",
+      "timeCap": 720,
+      "level": 5,
+      "tag": "RÉFÉRENCE",
+      "exercises": [
+        { "label": "[1 Pull-up + 1 Muscle-up] x5" },
+        { "label": "30 Push-up" },
+        { "label": "15 Pull-up" },
+        { "label": "15 Goblet Squat", "weight": "32kg" },
+        { "label": "[1 Pull-up + 1 Muscle-up] x3", "weight": "5kg" },
+        { "label": "15 Dips", "weight": "20kg" },
+        { "label": "8 Pull-up", "weight": "20kg" },
+        { "label": "15 Goblet Squat", "weight": "32kg" },
+        { "label": "[1 Pull-up + 1 Muscle-up]", "weight": "10kg" },
+        { "label": "8 Dips", "weight": "40kg" },
+        { "label": "4 Pull-up", "weight": "30kg" },
+        { "label": "15 Goblet Squat", "weight": "32kg" }
+      ]
+    },
+    {
+      "id": "wod-espoir",
+      "name": "WOD Type — Espoir (Div 3)",
+      "division": "Espoir (Div 3)",
+      "event": "CBL Example WOD",
+      "timeCap": 480,
+      "level": 3,
+      "tag": "OBJECTIF",
+      "exercises": [
+        { "label": "1 Muscle-up + 10 Single Bar Dips + 5 Pull-up" },
+        { "label": "30 Dips" },
+        { "label": "15 Squat", "weight": "40kg" },
+        { "label": "10 Pull-up", "weight": "5kg" },
+        { "label": "20 Dips", "weight": "10kg" },
+        { "label": "15 Squat", "weight": "40kg" },
+        { "label": "10 Dips", "weight": "20kg" },
+        { "label": "1 Muscle-up OU 4 Chest Pull-up" },
+        { "label": "15 Pull-up" }
+      ]
+    },
+    {
+      "id": "wod-pro",
+      "name": "WOD Type — Pro (Div 2)",
+      "division": "Pro (Div 2)",
+      "event": "CBL Example WOD",
+      "timeCap": 600,
+      "level": 4,
+      "tag": "RÉFÉRENCE",
+      "exercises": [
+        { "label": "10 Pull-up + 2 Muscle-up + 20 Single Bar Dips" },
+        { "label": "30 Dips", "weight": "15kg" },
+        { "label": "15 Squat", "weight": "60kg" },
+        { "label": "20 Pull-up", "weight": "10kg" },
+        { "label": "20 Dips", "weight": "15kg" },
+        { "label": "15 Squat", "weight": "60kg" },
+        { "label": "40 Push-up" },
+        { "label": "5 Muscle-up" },
+        { "label": "15 Pull-up" }
+      ]
+    },
+    {
+      "id": "wod-elite",
+      "name": "WOD Type — Elite (Div 1)",
+      "division": "Elite (Div 1)",
+      "event": "CBL Example WOD",
+      "timeCap": 720,
+      "level": 5,
+      "tag": "RÉFÉRENCE",
+      "exercises": [
+        { "label": "1 Muscle-up", "weight": "15kg" },
+        { "label": "50 Dips" },
+        { "label": "3 Muscle-up", "weight": "10kg" },
+        { "label": "50 Push-up" },
+        { "label": "5 Muscle-up", "weight": "10kg" },
+        { "label": "20 Squat", "weight": "60kg" },
+        { "label": "20 Pull-up", "weight": "15kg" },
+        { "label": "10 Dips", "weight": "50kg" },
+        { "label": "7 Muscle-up" },
+        { "label": "10 Dips", "weight": "30kg" },
+        { "label": "20 Squat", "weight": "60kg" }
+      ]
+    }
+  ]
+}

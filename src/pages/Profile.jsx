@@ -1,0 +1,202 @@
+import { motion } from 'framer-motion'
+import athlete from '../data/athlete.json'
+import plan from '../data/coaching-plan.json'
+
+function ProgressRing({ value, max, color, size = 80, strokeWidth = 6 }) {
+  const r = (size - strokeWidth * 2) / 2
+  const circ = 2 * Math.PI * r
+  const offset = circ * (1 - Math.min(1, value / max))
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#1A1A1A" strokeWidth={strokeWidth} />
+      <circle
+        cx={size/2} cy={size/2} r={r}
+        fill="none" stroke={color} strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeDasharray={circ}
+        strokeDashoffset={offset}
+        style={{ transition: 'stroke-dashoffset 0.8s ease' }}
+      />
+    </svg>
+  )
+}
+
+function MaxCard({ label, current, target, unit, color }) {
+  const pct = Math.round((current / target) * 100)
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="glass rounded-xl p-4 flex flex-col items-center text-center gap-2"
+    >
+      <div className="relative">
+        <ProgressRing value={current} max={target} color={color} size={72} strokeWidth={5} />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-sm font-bold tabular-nums">{current}</span>
+        </div>
+      </div>
+      <div>
+        <div className="text-sm font-semibold">{label}</div>
+        {unit && <div className="text-xs text-text-muted">{unit}</div>}
+        <div className="text-xs font-mono mt-0.5" style={{ color }}>{pct}%</div>
+      </div>
+    </motion.div>
+  )
+}
+
+function CompetitionProgress() {
+  const start = new Date(plan.meta.startDate)
+  const comp = new Date(athlete.competitionDate)
+  const today = new Date()
+  const totalDays = (comp - start) / (1000 * 60 * 60 * 24)
+  const elapsed = (today - start) / (1000 * 60 * 60 * 24)
+  const remaining = Math.max(0, Math.ceil((comp - today) / (1000 * 60 * 60 * 24)))
+  const pct = Math.min(100, Math.max(0, (elapsed / totalDays) * 100))
+
+  return (
+    <div className="glass rounded-2xl p-5">
+      <div className="flex items-start justify-between mb-4">
+        <div>
+          <div className="label mb-1">Countdown compétition</div>
+          <div className="text-xl font-bold">{athlete.nextCompetition}</div>
+          <div className="text-xs text-text-muted mt-0.5">{athlete.competitionDate}</div>
+        </div>
+        <div className="text-right">
+          <div className="text-4xl font-bold tabular-nums text-brand">{remaining}</div>
+          <div className="text-xs text-text-muted">jours</div>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex justify-between text-xs text-text-muted">
+          <span>Début plan: {plan.meta.startDate}</span>
+          <span>{Math.round(pct)}% du chemin</span>
+        </div>
+        <div className="h-2 bg-surface-3 rounded-full overflow-hidden">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${pct}%` }}
+            transition={{ duration: 1 }}
+            className="h-full bg-brand rounded-full"
+          />
+        </div>
+        <div className="flex justify-between text-xs text-text-muted">
+          <span>{Math.floor(elapsed)} j écoulés</span>
+          <span>Compétition</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const MAXES_DISPLAY = [
+  { key: 'pullUp', label: 'Tractions', color: '#00D4FF' },
+  { key: 'muscleUp', label: 'Muscle-up', color: '#FF9500' },
+  { key: 'dips', label: 'Dips', color: '#FF3D3D' },
+  { key: 'pushUp', label: 'Pompes', color: '#00D47A' },
+  { key: 'gobletSquat', label: 'Goblet', color: '#A78BFA' },
+]
+
+export default function Profile() {
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-6 space-y-6 animate-fade-in">
+
+      {/* Hero */}
+      <div className="glass rounded-2xl p-6 flex items-center gap-5">
+        <div className="w-16 h-16 rounded-2xl bg-brand flex items-center justify-center text-black text-2xl font-bold flex-shrink-0">
+          A
+        </div>
+        <div>
+          <h1 className="text-xl font-bold">{athlete.name}</h1>
+          <div className="text-sm text-text-muted mt-0.5">{athlete.goal}</div>
+          <div className="flex flex-wrap gap-2 mt-2">
+            <span className="tag border-brand/40 text-brand bg-brand/5 text-xs px-2 py-0.5">Enseignant EPS</span>
+            <span className="tag border-warn/40 text-warn bg-warn/5 text-xs px-2 py-0.5">Athlète Calisthenics</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Countdown */}
+      <CompetitionProgress />
+
+      {/* Context */}
+      <div className="glass rounded-2xl p-5 border-l-2 border-danger">
+        <div className="label mb-2" style={{ color: '#FF3D3D' }}>Contexte — pourquoi ce plan</div>
+        <p className="text-sm text-text-muted leading-relaxed">{athlete.context}</p>
+        <div className="mt-3 p-3 bg-danger/5 border border-danger/20 rounded-xl">
+          <div className="text-xs font-semibold text-danger mb-1">Point faible identifié</div>
+          <div className="text-sm">{athlete.weakPoint}</div>
+        </div>
+      </div>
+
+      {/* Maxes + targets */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <div className="label">Mes maxima → Objectifs 3 mois</div>
+        </div>
+        <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+          {MAXES_DISPLAY.map(m => (
+            <MaxCard
+              key={m.key}
+              label={m.label}
+              current={athlete.maxes[m.key]?.value}
+              target={athlete.targets3months[m.key]?.value}
+              unit={athlete.maxes[m.key]?.unit}
+              color={m.color}
+            />
+          ))}
+        </div>
+        <div className="text-xs text-text-muted mt-2 text-center">
+          Le cercle représente ta progression vers l'objectif cible
+        </div>
+      </div>
+
+      {/* Detailed maxes table */}
+      <div className="glass rounded-2xl overflow-hidden">
+        <div className="px-5 py-3 border-b border-border">
+          <div className="label">Détail des performances</div>
+        </div>
+        <div className="divide-y divide-border">
+          {MAXES_DISPLAY.map(m => {
+            const cur = athlete.maxes[m.key]?.value
+            const tgt = athlete.targets3months[m.key]?.value
+            const unit = athlete.maxes[m.key]?.unit || 'reps'
+            const delta = tgt - cur
+            return (
+              <div key={m.key} className="flex items-center gap-4 px-5 py-3">
+                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: m.color }} />
+                <div className="flex-1 text-sm font-medium">{m.label}</div>
+                <div className="text-right">
+                  <div className="text-sm font-bold tabular-nums">{cur} → {tgt}</div>
+                  <div className="text-[10px] text-text-muted">{unit} · +{delta} à gagner</div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Plan summary */}
+      <div className="glass rounded-2xl p-5">
+        <div className="label mb-3">Résumé du plan</div>
+        <div className="grid grid-cols-2 gap-3">
+          {plan.macroPhases.map(phase => (
+            <div key={phase.id} className="bg-surface-2 rounded-xl p-3 border border-border">
+              <div className="text-[10px] font-mono mb-1" style={{ color: phase.color }}>
+                Semaines {phase.weeks[0]}–{phase.weeks[phase.weeks.length - 1]}
+              </div>
+              <div className="text-xs font-semibold leading-tight">{phase.name.split('—')[1]?.trim()}</div>
+              <div className="flex flex-wrap gap-1 mt-1.5">
+                {phase.focus.map(f => (
+                  <span key={f} className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ color: phase.color, backgroundColor: phase.color + '15' }}>
+                    {f}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}

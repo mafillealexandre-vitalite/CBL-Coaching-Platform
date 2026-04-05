@@ -1,0 +1,377 @@
+{
+  "meta": {
+    "startDate": "2026-04-07",
+    "durationWeeks": 12,
+    "goal": "Compléter un circuit CBL Amateur niveau Espoir sans s'arrêter"
+  },
+  "macroPhases": [
+    {
+      "id": "m1",
+      "name": "Mois 1 — Base Lactique",
+      "weeks": [1, 2, 3, 4],
+      "color": "#00D4FF",
+      "objective": "Construire la tolérance lactique, augmenter le volume de travail, corriger le point faible identifié en compétition.",
+      "focus": ["Volume", "Lactique", "Base aérobie"],
+      "intensity": 60,
+      "volume": 75
+    },
+    {
+      "id": "m2",
+      "name": "Mois 2 — Spécificité CBL",
+      "weeks": [5, 6, 7, 8],
+      "color": "#FF9500",
+      "objective": "Reproduction fidèle des circuits CBL, travail sous pression temporelle, densité d'entraînement maximale.",
+      "focus": ["Circuits CBL", "Time pressure", "Densité"],
+      "intensity": 80,
+      "volume": 85
+    },
+    {
+      "id": "m3",
+      "name": "Mois 3 — Peaking",
+      "weeks": [9, 10, 11, 12],
+      "color": "#FF3D3D",
+      "objective": "Atteindre le pic de forme, simuler les conditions de compétition, décharger la fatigue avant l'événement.",
+      "focus": ["Simulation", "Intensité max", "Taper"],
+      "intensity": 95,
+      "volume": 60
+    }
+  ],
+  "mesoBlocks": [
+    {
+      "id": "b1",
+      "weeks": [1, 2],
+      "name": "Bloc 1 — Initiation",
+      "phase": "m1",
+      "objective": "Établir la base : apprendre à gérer l'effort en circuit, habituer le corps au lactate sans aller trop loin.",
+      "volume": "Modéré",
+      "intensity": "60–70% MR",
+      "deload": false,
+      "keyMetrics": ["Qualité d'exécution", "Récupération entre séries", "Fréquence cardiaque post-effort"]
+    },
+    {
+      "id": "b2",
+      "weeks": [3, 4],
+      "name": "Bloc 2 — Accumulation",
+      "phase": "m1",
+      "objective": "Monter le volume de travail lactique, réduire les temps de récup, commencer le travail en circuit continu.",
+      "volume": "Élevé",
+      "intensity": "70–80% MR",
+      "deload": false,
+      "keyMetrics": ["Temps de récup entre séries", "Total reps par circuit", "Sensation de brûlure musculaire"]
+    },
+    {
+      "id": "b3",
+      "weeks": [5, 6],
+      "name": "Bloc 3 — Spécificité",
+      "phase": "m2",
+      "objective": "Reproduire exactement les circuits CBL extrait des compétitions. Timer 6 min. Zéro concession.",
+      "volume": "Élevé",
+      "intensity": "80–85% MR",
+      "deload": false,
+      "keyMetrics": ["Complétion du circuit en temps", "Nombre de pauses", "Qualité sous fatigue"]
+    },
+    {
+      "id": "b4",
+      "weeks": [7, 8],
+      "name": "Bloc 4 — Densité Max",
+      "phase": "m2",
+      "objective": "Augmenter la densité : moins de repos, plus de volume par unité de temps. Introduction du travail lesté.",
+      "volume": "Maximum",
+      "intensity": "85–90% MR",
+      "deload": false,
+      "keyMetrics": ["Reps/minute en circuit", "Volume lesté", "Maintien de la technique sous charge"]
+    },
+    {
+      "id": "b5",
+      "weeks": [9, 10],
+      "name": "Bloc 5 — Peaking",
+      "phase": "m3",
+      "objective": "Simulations complètes format compétition. 3 sets de 6 min avec récup 3 min entre sets comme en vrai.",
+      "volume": "Réduit",
+      "intensity": "90–100% MR",
+      "deload": false,
+      "keyMetrics": ["Temps total circuit", "Set 1 + Set 2 sans abandon", "Performance relative vs baseline"]
+    },
+    {
+      "id": "b6",
+      "weeks": [11, 12],
+      "name": "Bloc 6 — Taper",
+      "phase": "m3",
+      "objective": "Décharge contrôlée. Maintenir les acquis, réduire la fatigue accumulée, arriver frais en compétition.",
+      "volume": "Léger",
+      "intensity": "70–75% MR",
+      "deload": true,
+      "keyMetrics": ["Récupération subjective", "Qualité du sommeil", "Feeling sur les mouvements clés"]
+    }
+  ],
+  "sessionTypes": {
+    "force": {
+      "id": "force",
+      "name": "Force",
+      "color": "#00D4FF",
+      "icon": "💪",
+      "description": "Travail de force pure sur les mouvements clés CBL"
+    },
+    "specificity": {
+      "id": "specificity",
+      "name": "Spécificité",
+      "color": "#FF9500",
+      "icon": "⚡",
+      "description": "Circuits CBL avec timer, logique compétition"
+    },
+    "lactate": {
+      "id": "lactate",
+      "name": "Lactique",
+      "color": "#FF3D3D",
+      "icon": "🔥",
+      "description": "Travail d'endurance musculaire et tolérance au lactate"
+    },
+    "recovery": {
+      "id": "recovery",
+      "name": "Récup Active",
+      "color": "#00D47A",
+      "icon": "🌿",
+      "description": "Mobilité, gainage léger, travail antagoniste"
+    },
+    "simulation": {
+      "id": "simulation",
+      "name": "Simulation",
+      "color": "#FF3D3D",
+      "icon": "🏆",
+      "description": "Simulation complète format compétition CBL"
+    }
+  },
+  "weekTemplates": {
+    "m1-standard": {
+      "sessionCount": 4,
+      "sessions": [
+        {
+          "daySlot": 1,
+          "type": "force",
+          "name": "Force Pull / MU",
+          "warmup": [
+            { "exercise": "Barre fixe activation", "sets": 3, "reps": 5, "rest": 60, "note": "Scapulaires, prise en main" },
+            { "exercise": "Australian pull-up", "sets": 2, "reps": 10, "rest": 60 }
+          ],
+          "main": [
+            { "exercise": "Tractions lestées", "sets": 5, "reps": 5, "weight": "+5kg", "rest": 180, "note": "Qualité > quantité" },
+            { "exercise": "Muscle-up strict", "sets": 5, "reps": "max-2", "rest": 180, "note": "Stoppe avant l'échec" },
+            { "exercise": "Chest-to-bar pull-up", "sets": 4, "reps": 8, "rest": 120 },
+            { "exercise": "L-sit hang", "sets": 3, "duration": 20, "rest": 90, "note": "Gainage intégré" }
+          ],
+          "finisher": [
+            { "exercise": "AMRAP 5min: 5 Pull-up + 10 Push-up", "note": "Pace régulier, pas sprint" }
+          ]
+        },
+        {
+          "daySlot": 2,
+          "type": "lactate",
+          "name": "Lactique Push / Dips",
+          "warmup": [
+            { "exercise": "Mobilité épaules + poignets", "duration": 300 },
+            { "exercise": "Dips au poids de corps", "sets": 2, "reps": 10, "rest": 60 }
+          ],
+          "main": [
+            { "exercise": "Dips lestés", "sets": 5, "reps": 8, "weight": "+10kg", "rest": 180 },
+            { "exercise": "Pompes diamonds", "sets": 4, "reps": 15, "rest": 90 },
+            { "exercise": "Dips barres parallèles", "sets": 4, "reps": "max-3", "rest": 120 }
+          ],
+          "finisher": [
+            { "exercise": "3 rounds: 12 Dips + 15 Push-up — repos 90s", "note": "Dernière rep propre = fin du set" }
+          ]
+        },
+        {
+          "daySlot": 4,
+          "type": "lactate",
+          "name": "Circuit Lactique Complet",
+          "warmup": [
+            { "exercise": "Mobilité complète", "duration": 600 }
+          ],
+          "main": [
+            { "exercise": "Circuit A x4: 8 Pull-up + 8 Dips + 12 Push-up", "rest": 120, "note": "Repos 120s entre rounds" },
+            { "exercise": "Goblet Squat", "sets": 4, "reps": 20, "weight": "16kg", "rest": 90 }
+          ],
+          "finisher": [
+            { "exercise": "EMOM 8min: pair=6 Pull-up / impair=10 Push-up" }
+          ]
+        },
+        {
+          "daySlot": 5,
+          "type": "recovery",
+          "name": "Récup Active + Mobilité",
+          "main": [
+            { "exercise": "Mobilité épaules (band distraction)", "duration": 300 },
+            { "exercise": "Gainage planche + side plank", "sets": 3, "duration": 45, "rest": 45 },
+            { "exercise": "Pompes lentes (3-1-3)", "sets": 3, "reps": 10, "rest": 60, "note": "Travail antagoniste léger" },
+            { "exercise": "Squat gobelet contrôle", "sets": 3, "reps": 15, "weight": "12kg", "rest": 60 },
+            { "exercise": "Yoga/stretching global", "duration": 600 }
+          ]
+        }
+      ]
+    },
+    "m2-standard": {
+      "sessionCount": 5,
+      "sessions": [
+        {
+          "daySlot": 1,
+          "type": "force",
+          "name": "Force Max Pull",
+          "warmup": [
+            { "exercise": "Activation scapulaire", "sets": 3, "reps": 8, "rest": 60 }
+          ],
+          "main": [
+            { "exercise": "Tractions lestées", "sets": 5, "reps": 4, "weight": "+10kg", "rest": 180 },
+            { "exercise": "Muscle-up lestés", "sets": 4, "reps": 3, "weight": "+5kg", "rest": 180 },
+            { "exercise": "Pull-up explo (tempo X-0-1)", "sets": 4, "reps": 6, "rest": 120 }
+          ],
+          "finisher": [
+            { "exercise": "10 rounds: [1 MU + 5 Pull-up], repos 60s" }
+          ]
+        },
+        {
+          "daySlot": 2,
+          "type": "specificity",
+          "name": "Circuit CBL Spécifique",
+          "warmup": [
+            { "exercise": "Activation complète", "duration": 600 }
+          ],
+          "main": [
+            { "exercise": "Circuit CBL Open Q7 Amateur R1 x2", "timeCap": 360, "rest": 300, "note": "Objectif: compléter en moins de 6 min" }
+          ],
+          "finisher": [
+            { "exercise": "Analyse: temps par station, points de blocage" }
+          ]
+        },
+        {
+          "daySlot": 3,
+          "type": "recovery",
+          "name": "Récup Active",
+          "main": [
+            { "exercise": "Mobilité + stretching", "duration": 900 },
+            { "exercise": "Marche rapide ou vélo léger", "duration": 1200 }
+          ]
+        },
+        {
+          "daySlot": 5,
+          "type": "lactate",
+          "name": "Densité Maximale",
+          "warmup": [
+            { "exercise": "Activation complète", "duration": 600 }
+          ],
+          "main": [
+            { "exercise": "Tabata Pull-up (20s on / 10s off) x8", "note": "Max reps qualitatives" },
+            { "exercise": "3 rounds: 20 Dips + 20 Push-up + 20 Goblet @16kg", "rest": 120 },
+            { "exercise": "Finisher 5 min: max Muscle-up" }
+          ]
+        },
+        {
+          "daySlot": 6,
+          "type": "simulation",
+          "name": "Simulation Circuit CBL",
+          "warmup": [
+            { "exercise": "Échauffement progressif 15 min" }
+          ],
+          "main": [
+            { "exercise": "Set 1: Circuit CBL timer 6 min", "timeCap": 360, "rest": 180, "note": "Exactement comme en compét" },
+            { "exercise": "Set 2: Circuit CBL timer 6 min", "timeCap": 360, "rest": 180, "note": "Maintenir la qualité sous fatigue" }
+          ],
+          "debrief": "Score: reps complétées, temps restant, stations non finies"
+        }
+      ]
+    },
+    "m3-peak": {
+      "sessionCount": 5,
+      "sessions": [
+        {
+          "daySlot": 1,
+          "type": "force",
+          "name": "Force Activation",
+          "main": [
+            { "exercise": "Tractions lestées qualitatives", "sets": 5, "reps": 3, "weight": "+12kg", "rest": 180 },
+            { "exercise": "Muscle-up singles", "sets": 8, "reps": 1, "rest": 90, "note": "Qualité maximale à chaque rep" }
+          ]
+        },
+        {
+          "daySlot": 2,
+          "type": "simulation",
+          "name": "Simulation Compétition Complète",
+          "main": [
+            { "exercise": "Set 1 + Set 2 format CBL", "timeCap": 360, "rest": 180, "note": "Conditions réelles" },
+            { "exercise": "Debriefing écrit post-session" }
+          ]
+        },
+        {
+          "daySlot": 4,
+          "type": "specificity",
+          "name": "Polissage Technique",
+          "main": [
+            { "exercise": "MU technique drill", "sets": 6, "reps": 3, "rest": 120 },
+            { "exercise": "Circuit partiel à 80%", "note": "Feeling > performance" }
+          ]
+        },
+        {
+          "daySlot": 5,
+          "type": "lactate",
+          "name": "Intensité Courte",
+          "main": [
+            { "exercise": "5 rounds: 30s all-out / 90s repos", "note": "Maximum sur chaque mouvement CBL" }
+          ]
+        },
+        {
+          "daySlot": 6,
+          "type": "recovery",
+          "name": "Récup + Mental",
+          "main": [
+            { "exercise": "Yoga + respiration", "duration": 900 },
+            { "exercise": "Visualisation circuit CBL", "duration": 600 }
+          ]
+        }
+      ]
+    },
+    "deload": {
+      "sessionCount": 3,
+      "sessions": [
+        {
+          "daySlot": 1,
+          "type": "force",
+          "name": "Entretien Force",
+          "main": [
+            { "exercise": "Tractions", "sets": 3, "reps": 8, "weight": "bodyweight", "rest": 120, "note": "70% du volume habituel" },
+            { "exercise": "MU x5 singles qualitatives", "rest": 90 }
+          ]
+        },
+        {
+          "daySlot": 3,
+          "type": "specificity",
+          "name": "Simulation Légère",
+          "main": [
+            { "exercise": "1 set circuit CBL à 70%", "timeCap": 360, "note": "Feelings, pas de performance" }
+          ]
+        },
+        {
+          "daySlot": 5,
+          "type": "recovery",
+          "name": "Récup Totale",
+          "main": [
+            { "exercise": "Mobilité + bain froid si possible", "duration": 1200 }
+          ]
+        }
+      ]
+    }
+  },
+  "progressionObjectives": [
+    { "week": 4, "exercise": "Pull-up", "target": 25, "note": "+2 reps" },
+    { "week": 4, "exercise": "Muscle-up", "target": 9, "note": "+2 reps" },
+    { "week": 4, "exercise": "Dips", "target": 35, "note": "+5 reps" },
+    { "week": 4, "exercise": "Push-up", "target": 58, "note": "+6 reps" },
+    { "week": 8, "exercise": "Pull-up", "target": 28, "note": "+5 reps" },
+    { "week": 8, "exercise": "Muscle-up", "target": 10, "note": "+3 reps" },
+    { "week": 8, "exercise": "Dips", "target": 38, "note": "+8 reps" },
+    { "week": 8, "exercise": "Push-up", "target": 62, "note": "+10 reps" },
+    { "week": 12, "exercise": "Pull-up", "target": 30, "note": "+7 reps" },
+    { "week": 12, "exercise": "Muscle-up", "target": 12, "note": "+5 reps" },
+    { "week": 12, "exercise": "Dips", "target": 40, "note": "+10 reps" },
+    { "week": 12, "exercise": "Push-up", "target": 65, "note": "+13 reps" },
+    { "week": 12, "exercise": "Goblet Squat @16kg", "target": 40, "note": "+10 reps" }
+  ]
+}

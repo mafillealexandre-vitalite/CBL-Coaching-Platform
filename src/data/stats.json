@@ -1,0 +1,17 @@
+{
+  "performances": [
+    {
+      "date": "2026-04-04",
+      "week": 0,
+      "label": "Baseline",
+      "values": {
+        "pullUp": 23,
+        "muscleUp": 7,
+        "dips": 30,
+        "pushUp": 52,
+        "gobletSquat": 30
+      }
+    }
+  ],
+  "sessions": []
+}
