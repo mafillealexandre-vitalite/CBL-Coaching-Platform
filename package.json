@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:vercel": "vite build --config vite.config.vercel.js",
+    "build:local": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {

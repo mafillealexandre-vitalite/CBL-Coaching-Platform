@@ -149,6 +149,7 @@
           "daySlot": 1,
           "type": "force",
           "name": "Force Pull / MU",
+          "intention": "Construire la base de force tractrice. Les tractions lestées posent les fondations de tout ce qui vient après en compétition CBL.",
           "warmup": [
             { "exercise": "Barre fixe activation", "sets": 3, "reps": 5, "rest": 60, "note": "Scapulaires, prise en main" },
             { "exercise": "Australian pull-up", "sets": 2, "reps": 10, "rest": 60 }
@@ -167,6 +168,7 @@
           "daySlot": 2,
           "type": "lactate",
           "name": "Lactique Push / Dips",
+          "intention": "Développer l'endurance des triceps sous lactate. Les dips sont le mouvement discriminant en circuit CBL — on les fait même quand ça brûle.",
           "warmup": [
             { "exercise": "Mobilité épaules + poignets", "duration": 300 },
             { "exercise": "Dips au poids de corps", "sets": 2, "reps": 10, "rest": 60 }
@@ -184,6 +186,7 @@
           "daySlot": 4,
           "type": "lactate",
           "name": "Circuit Lactique Complet",
+          "intention": "Apprendre à tolérer l'accumulation lactique sur tout le corps. Ce circuit prépare le système tampon pour les efforts de compétition.",
           "warmup": [
             { "exercise": "Mobilité complète", "duration": 600 }
           ],
@@ -199,6 +202,7 @@
           "daySlot": 5,
           "type": "recovery",
           "name": "Récup Active + Mobilité",
+          "intention": "Accélérer la récupération et maintenir l'amplitude articulaire. Les muscles récupèrent mieux en mouvement léger qu'au repos total.",
           "main": [
             { "exercise": "Mobilité épaules (band distraction)", "duration": 300 },
             { "exercise": "Gainage planche + side plank", "sets": 3, "duration": 45, "rest": 45 },
@@ -216,6 +220,7 @@
           "daySlot": 1,
           "type": "force",
           "name": "Force Max Pull",
+          "intention": "Atteindre les intensités maximales en traction et muscle-up. C'est ici que le plafond de force se construit — sans lui, l'endurance ne suit pas.",
           "warmup": [
             { "exercise": "Activation scapulaire", "sets": 3, "reps": 8, "rest": 60 }
           ],
@@ -232,6 +237,7 @@
           "daySlot": 2,
           "type": "specificity",
           "name": "Circuit CBL Spécifique",
+          "intention": "Reproduire exactement les conditions de compétition. Chaque seconde gagnée sur ce circuit rapproche de la qualification.",
           "warmup": [
             { "exercise": "Activation complète", "duration": 600 }
           ],
@@ -246,6 +252,7 @@
           "daySlot": 3,
           "type": "recovery",
           "name": "Récup Active",
+          "intention": "Récupérer pour mieux absorber le prochain bloc de charge. La récupération est aussi un entraînement.",
           "main": [
             { "exercise": "Mobilité + stretching", "duration": 900 },
             { "exercise": "Marche rapide ou vélo léger", "duration": 1200 }
@@ -255,6 +262,7 @@
           "daySlot": 5,
           "type": "lactate",
           "name": "Densité Maximale",
+          "intention": "Maximiser le volume dans un temps contraint. C'est la capacité à rester efficace sous fatigue qui sépare les athlètes en circuit CBL.",
           "warmup": [
             { "exercise": "Activation complète", "duration": 600 }
           ],
@@ -268,6 +276,7 @@
           "daySlot": 6,
           "type": "simulation",
           "name": "Simulation Circuit CBL",
+          "intention": "Deux sets, comme en compétition. Le corps doit apprendre à produire un deuxième effort maximal après 3 minutes de récup — c'est ça le vrai défi CBL.",
           "warmup": [
             { "exercise": "Échauffement progressif 15 min" }
           ],
@@ -286,6 +295,7 @@
           "daySlot": 1,
           "type": "force",
           "name": "Force Activation",
+          "intention": "Maintenir la force sans accumuler de fatigue. Quelques reps de qualité maximale suffisent à garder les adaptations neuronales en phase de peaking.",
           "main": [
             { "exercise": "Tractions lestées qualitatives", "sets": 5, "reps": 3, "weight": "+12kg", "rest": 180 },
             { "exercise": "Muscle-up singles", "sets": 8, "reps": 1, "rest": 90, "note": "Qualité maximale à chaque rep" }
@@ -295,6 +305,7 @@
           "daySlot": 2,
           "type": "simulation",
           "name": "Simulation Compétition Complète",
+          "intention": "La répétition générale. Chaque set compte, chaque seconde compte. Habituer le système nerveux à cette demande exacte avant le vrai.",
           "main": [
             { "exercise": "Set 1 + Set 2 format CBL", "timeCap": 360, "rest": 180, "note": "Conditions réelles" },
             { "exercise": "Debriefing écrit post-session" }
@@ -304,6 +315,7 @@
           "daySlot": 4,
           "type": "specificity",
           "name": "Polissage Technique",
+          "intention": "Affiner les patterns moteurs. À ce stade, c'est la régularité technique sous fatigue qui fait la différence, pas la force brute.",
           "main": [
             { "exercise": "MU technique drill", "sets": 6, "reps": 3, "rest": 120 },
             { "exercise": "Circuit partiel à 80%", "note": "Feeling > performance" }
@@ -313,6 +325,7 @@
           "daySlot": 5,
           "type": "lactate",
           "name": "Intensité Courte",
+          "intention": "Activer le système lactique sans l'épuiser. Ces courtes rafales maintiennent la capacité anaérobie sans creuser les réserves avant la compétition.",
           "main": [
             { "exercise": "5 rounds: 30s all-out / 90s repos", "note": "Maximum sur chaque mouvement CBL" }
           ]
@@ -321,6 +334,7 @@
           "daySlot": 6,
           "type": "recovery",
           "name": "Récup + Mental",
+          "intention": "La forme mentale est aussi déterminante que la forme physique. Visualiser le circuit parfait, c'est l'exécuter en avance.",
           "main": [
             { "exercise": "Yoga + respiration", "duration": 900 },
             { "exercise": "Visualisation circuit CBL", "duration": 600 }
@@ -335,6 +349,7 @@
           "daySlot": 1,
           "type": "force",
           "name": "Entretien Force",
+          "intention": "Garder le stimulus minimal pour conserver les adaptations. Le déload n'est pas de la paresse — c'est de la stratégie de performance.",
           "main": [
             { "exercise": "Tractions", "sets": 3, "reps": 8, "weight": "bodyweight", "rest": 120, "note": "70% du volume habituel" },
             { "exercise": "MU x5 singles qualitatives", "rest": 90 }
@@ -344,6 +359,7 @@
           "daySlot": 3,
           "type": "specificity",
           "name": "Simulation Légère",
+          "intention": "Un rappel du geste, pas une performance. Sentir le circuit sans le stress de la performance — entretenir la mémoire moteur.",
           "main": [
             { "exercise": "1 set circuit CBL à 70%", "timeCap": 360, "note": "Feelings, pas de performance" }
           ]
@@ -352,6 +368,7 @@
           "daySlot": 5,
           "type": "recovery",
           "name": "Récup Totale",
+          "intention": "Laisser le corps consolider les semaines de travail. La compétition se gagne ici, dans le repos actif et le relâchement mental.",
           "main": [
             { "exercise": "Mobilité + bain froid si possible", "duration": 1200 }
           ]
@@ -373,5 +390,47 @@
     { "week": 12, "exercise": "Dips", "target": 40, "note": "+10 reps" },
     { "week": 12, "exercise": "Push-up", "target": 65, "note": "+13 reps" },
     { "week": 12, "exercise": "Goblet Squat @16kg", "target": 40, "note": "+10 reps" }
+  ],
+  "jalons": [
+    {
+      "id": "j0",
+      "week": 0,
+      "type": "diagnostic_complet",
+      "label": "Jalon 0 — Diagnostic initial",
+      "description": "Avant tout entraînement. Mesure les 4 axes du profil CBL.",
+      "estimatedMinutes": 45
+    },
+    {
+      "id": "j1",
+      "week": 2,
+      "type": "circuit_only",
+      "label": "Jalon 1 — Circuit lactique",
+      "description": "Circuit test CBL × 2 sets chronométrés. Compare avec le circuit du diagnostic J0.",
+      "estimatedMinutes": 25
+    },
+    {
+      "id": "j2",
+      "week": 4,
+      "type": "diagnostic_complet",
+      "label": "Jalon 2 — Bilan Méso 1",
+      "description": "Diagnostic complet fin du premier bloc. Affinage du plan selon les deltas.",
+      "estimatedMinutes": 45
+    },
+    {
+      "id": "j3",
+      "week": 8,
+      "type": "diagnostic_complet",
+      "label": "Jalon 3 — Bilan Méso 2",
+      "description": "Diagnostic complet fin du deuxième bloc. Calibrage phase peaking.",
+      "estimatedMinutes": 45
+    },
+    {
+      "id": "j4",
+      "week": 12,
+      "type": "diagnostic_complet",
+      "label": "Jalon 4 — Bilan final",
+      "description": "Dernier diagnostic avant compétition. Mesure de la progression totale.",
+      "estimatedMinutes": 45
+    }
   ]
 }

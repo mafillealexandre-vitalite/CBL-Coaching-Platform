@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import athlete from '../data/athlete.json'
 import plan from '../data/coaching-plan.json'
 import StoryCard from '../components/ui/StoryCard'
+import Accordion from '../components/ui/Accordion'
+import SessionCompleteModal from '../components/ui/SessionCompleteModal'
+import { WeeklyRecap, MonthlyRecap } from '../components/ui/WeeklyRecap'
+import { estimateSessionDuration, getSessionLog, getPlanWeek } from '../utils/sessionUtils'
 
 const DAYS = [
   { id: 1, short: 'Lun', label: 'Lundi' },
@@ -16,12 +20,12 @@ const DAYS = [
 ]
 
 const SESSION_TYPES = {
-  force: { label: 'Force', color: '#00D4FF', bg: 'bg-brand/10 border-brand/20 text-brand' },
-  lactate: { label: 'Lactique', color: '#FF3D3D', bg: 'bg-danger/10 border-danger/20 text-danger' },
-  specificity: { label: 'Spécificité', color: '#FF9500', bg: 'bg-warn/10 border-warn/20 text-warn' },
-  simulation: { label: 'Simulation', color: '#FF3D3D', bg: 'bg-danger/10 border-danger/20 text-danger' },
-  recovery: { label: 'Récup', color: '#00D47A', bg: 'bg-success/10 border-success/20 text-success' },
-  rest: { label: 'Repos', color: '#444', bg: 'bg-surface-3 border-border text-text-faint' },
+  force:      { label: 'Force',       color: '#00D4FF', bg: 'bg-brand/10 border-brand/20 text-brand' },
+  lactate:    { label: 'Lactique',    color: '#FF3D3D', bg: 'bg-danger/10 border-danger/20 text-danger' },
+  specificity:{ label: 'Spécificité', color: '#FF9500', bg: 'bg-warn/10 border-warn/20 text-warn' },
+  simulation: { label: 'Simulation',  color: '#FF3D3D', bg: 'bg-danger/10 border-danger/20 text-danger' },
+  recovery:   { label: 'Récup',       color: '#00D47A', bg: 'bg-success/10 border-success/20 text-success' },
+  rest:       { label: 'Repos',       color: '#444',    bg: 'bg-surface-3 border-border text-text-faint' },
 }
 
 function getWeekNumber(date) {
@@ -52,6 +56,22 @@ function assignSessionsToDays(availability, template) {
   return map
 }
 
+// ─── "J'ai fait ma séance" validation check ───────────────────────────────────
+
+function useSessionValidatedToday() {
+  const [validated, setValidated] = useState(null) // null = loading
+  const refresh = () => {
+    const log = getSessionLog()
+    const today = new Date().toDateString()
+    const todayEntry = log.filter(s => new Date(s.date).toDateString() === today && s.completed)
+    setValidated(todayEntry.length > 0 ? todayEntry[todayEntry.length - 1] : null)
+  }
+  useEffect(refresh, [])
+  return [validated, refresh]
+}
+
+// ─── Availability + Week plan ─────────────────────────────────────────────────
+
 function AvailabilityPicker({ availability, onChange }) {
   const toggle = (dayId) => {
     if (availability.includes(dayId)) {
@@ -60,17 +80,13 @@ function AvailabilityPicker({ availability, onChange }) {
       onChange([...availability, dayId].sort())
     }
   }
-
   return (
-    <div className="glass rounded-2xl p-5">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <div className="label mb-1">Mes dispos cette semaine</div>
-          <div className="text-xs text-text-muted">Coche les jours où tu peux t'entraîner — le plan s'adapte</div>
-        </div>
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <div className="text-xs text-text-muted">Coche les jours où tu peux t'entraîner</div>
         <div className="text-sm font-mono text-brand">{availability.length}j / sem</div>
       </div>
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex gap-1.5 flex-wrap">
         {DAYS.map(day => {
           const active = availability.includes(day.id)
           return (
@@ -78,10 +94,8 @@ function AvailabilityPicker({ availability, onChange }) {
               key={day.id}
               onClick={() => toggle(day.id)}
               whileTap={{ scale: 0.93 }}
-              className={`flex-1 min-w-[2.5rem] py-2.5 rounded-xl text-sm font-semibold border transition-all duration-150 ${
-                active
-                  ? 'bg-brand text-black border-brand'
-                  : 'bg-surface-2 text-text-muted border-border hover:border-text-faint'
+              className={`flex-1 min-w-[2.2rem] py-2 rounded-xl text-sm font-semibold border transition-all duration-150 ${
+                active ? 'bg-brand text-black border-brand' : 'bg-surface-2 text-text-muted border-border'
               }`}
             >
               {day.short}
@@ -95,62 +109,207 @@ function AvailabilityPicker({ availability, onChange }) {
 
 function WeekPlan({ availability, sessionMap }) {
   const today = new Date().getDay()
-
   return (
-    <div className="glass rounded-2xl p-5">
-      <div className="label mb-4">Planning de la semaine</div>
-      <div className="space-y-2">
-        {DAYS.map(day => {
-          const sessions = sessionMap[day.id] || []
-          const isAvailable = availability.includes(day.id)
-          const isToday = day.id === today
-          const hasSession = sessions.length > 0
+    <div className="space-y-1.5 mt-4">
+      {DAYS.map(day => {
+        const sessions = sessionMap[day.id] || []
+        const isAvailable = availability.includes(day.id)
+        const isToday = day.id === today
 
-          return (
-            <div
-              key={day.id}
-              className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
-                isToday
-                  ? 'border-brand/30 bg-brand/5'
-                  : 'border-border bg-surface-2/50'
-              }`}
-            >
-              {/* Day label */}
-              <div className={`w-12 text-sm font-semibold flex-shrink-0 ${isToday ? 'text-brand' : 'text-text-muted'}`}>
-                {day.short}
-                {isToday && <div className="text-[9px] text-brand/70 font-normal uppercase tracking-wider">Auj.</div>}
-              </div>
-
-              {/* Session pill(s) */}
-              <div className="flex-1 flex flex-wrap gap-1.5">
-                {isAvailable && hasSession ? (
-                  sessions.map((s, i) => {
-                    const st = SESSION_TYPES[s.type] || SESSION_TYPES.rest
-                    return (
-                      <Link key={i} to="/session" className={`tag px-2.5 py-1 text-xs font-medium rounded-lg border ${st.bg}`}>
+        return (
+          <div key={day.id} className={`flex items-center gap-3 p-2.5 rounded-xl border transition-all ${
+            isToday ? 'border-brand/30 bg-brand/5' : 'border-border bg-surface-2/30'
+          }`}>
+            <div className={`w-10 text-sm font-semibold flex-shrink-0 ${isToday ? 'text-brand' : 'text-text-muted'}`}>
+              {day.short}
+            </div>
+            <div className="flex-1 flex flex-wrap gap-1.5">
+              {isAvailable && sessions.length > 0 ? (
+                sessions.map((s, i) => {
+                  const st = SESSION_TYPES[s.type] || SESSION_TYPES.rest
+                  const est = estimateSessionDuration(s)
+                  return (
+                    <div key={i} className="flex items-center gap-1.5">
+                      <Link to="/session" className={`tag px-2 py-0.5 text-xs font-medium rounded-lg border ${st.bg}`}>
                         {s.name}
                       </Link>
-                    )
-                  })
-                ) : isAvailable ? (
-                  <span className="text-xs text-text-faint">Repos</span>
-                ) : (
-                  <span className="text-xs text-text-faint italic">Indisponible</span>
-                )}
-              </div>
-
-              {/* Availability toggle dot */}
-              <div className={`w-2 h-2 rounded-full flex-shrink-0 ${isAvailable ? 'bg-success' : 'bg-surface-3'}`} />
+                      {est && (
+                        <span className="text-[10px] text-text-faint">⏱ ~{est}min</span>
+                      )}
+                    </div>
+                  )
+                })
+              ) : isAvailable ? (
+                <span className="text-xs text-text-faint">Repos</span>
+              ) : (
+                <span className="text-xs text-text-faint italic">Indisponible</span>
+              )}
             </div>
-          )
-        })}
-      </div>
+            <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isAvailable ? 'bg-success' : 'bg-surface-3'}`} />
+          </div>
+        )
+      })}
     </div>
   )
 }
 
+// ─── KPIs ─────────────────────────────────────────────────────────────────────
+
+function useKPIs(refreshKey) {
+  const [kpis, setKpis] = useState(null)
+  useEffect(() => {
+    const sessions = getSessionLog()
+    const coachLog = JSON.parse(localStorage.getItem('cbl_coach_log') || '[]')
+    const diagnostic = JSON.parse(localStorage.getItem('cbl_diagnostic') || 'null')
+    const now = new Date()
+
+    const last28Sessions = sessions.filter(s => (now - new Date(s.date)) < 28 * 86400 * 1000)
+    const done28 = last28Sessions.filter(s => s.completed).length
+    const regularite = last28Sessions.length > 0 ? Math.round((done28 / last28Sessions.length) * 100) : null
+
+    const startOfWeek = new Date(now)
+    startOfWeek.setDate(now.getDate() - now.getDay())
+    startOfWeek.setHours(0, 0, 0, 0)
+    const thisWeekDone = sessions.filter(s => new Date(s.date) >= startOfWeek && s.completed).length
+
+    const last7 = sessions.filter(s => (now - new Date(s.date)) < 7 * 86400 * 1000 && s.rpe)
+    const rpeAvg = last7.length > 0
+      ? (last7.reduce((sum, s) => sum + (s.rpe || 7), 0) / last7.length).toFixed(1)
+      : null
+
+    let streak = 0
+    const completedDates = [...new Set(sessions.filter(s => s.completed).map(s => new Date(s.date).toDateString()))]
+    const sorted = completedDates.sort((a, b) => new Date(b) - new Date(a))
+    let prev = new Date(now); prev.setHours(0, 0, 0, 0)
+    for (const d of sorted) {
+      const diff = Math.round((prev - new Date(d)) / 86400000)
+      if (diff <= 1) { streak++; prev = new Date(d) } else break
+    }
+
+    setKpis({
+      regularite, thisWeekDone, rpeAvg, streak,
+      diagnosticScore: diagnostic?.profile?.overall ?? null,
+      hasDiagnostic: !!diagnostic,
+    })
+  }, [refreshKey])
+  return kpis
+}
+
+function KPIGrid({ kpis, onStory, currentWeek, currentMonthIndex }) {
+  const [showWeekRecap, setShowWeekRecap] = useState(false)
+  const [showMonthRecap, setShowMonthRecap] = useState(false)
+  if (!kpis) return null
+
+  const items = [
+    {
+      label: 'Régularité 28j',
+      value: kpis.regularite != null ? `${kpis.regularite}%` : '—',
+      sub: kpis.regularite != null ? (kpis.regularite >= 75 ? 'En bonne voie' : 'À améliorer') : 'Pas de données',
+      color: kpis.regularite == null ? '#666' : kpis.regularite >= 75 ? '#00D47A' : '#FF9500',
+    },
+    {
+      label: 'Séances cette semaine',
+      value: `${kpis.thisWeekDone}`,
+      sub: kpis.thisWeekDone === 0 ? 'Aucune encore' : `${kpis.thisWeekDone} faite${kpis.thisWeekDone > 1 ? 's' : ''}`,
+      color: kpis.thisWeekDone > 0 ? '#00D4FF' : '#666',
+    },
+    {
+      label: 'RPE moyen 7j',
+      value: kpis.rpeAvg ?? '—',
+      sub: kpis.rpeAvg != null ? (kpis.rpeAvg > 8.5 ? '⚠ Charge élevée' : kpis.rpeAvg < 5 ? 'Sous-charge' : 'Zone optimale') : 'Valide des séances',
+      color: kpis.rpeAvg == null ? '#666' : kpis.rpeAvg > 8.5 ? '#FF3D3D' : kpis.rpeAvg < 5 ? '#FF9500' : '#00D47A',
+    },
+    {
+      label: 'Streak',
+      value: `${kpis.streak}j`,
+      sub: kpis.streak === 0 ? 'Lance une séance' : kpis.streak >= 5 ? 'En feu 🔥' : 'Continue !',
+      color: kpis.streak >= 3 ? '#FF9500' : kpis.streak > 0 ? '#00D4FF' : '#666',
+    },
+  ]
+
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-3">
+        {items.map(item => (
+          <div key={item.label} className="glass rounded-xl p-3.5">
+            <div className="text-[11px] text-text-faint mb-1">{item.label}</div>
+            <div className="text-2xl font-bold tabular-nums" style={{ color: item.color }}>{item.value}</div>
+            <div className="text-[11px] text-text-faint mt-0.5">{item.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Recap buttons */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => setShowWeekRecap(s => !s)}
+          className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl bg-surface-2 border border-border text-xs font-medium text-text-muted hover:text-text-primary hover:border-brand/20 transition-all"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+          </svg>
+          Récap semaine {currentWeek}
+        </button>
+        <button
+          onClick={() => setShowMonthRecap(s => !s)}
+          className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl bg-surface-2 border border-border text-xs font-medium text-text-muted hover:text-text-primary hover:border-brand/20 transition-all"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <path d="M2 20h20M2 14h20M2 8h20M2 2h20"/>
+          </svg>
+          Récap mois {currentMonthIndex + 1}
+        </button>
+        <button
+          onClick={onStory}
+          className="px-3 py-2 rounded-xl bg-surface-2 border border-border text-text-faint hover:text-brand hover:border-brand/20 transition-all"
+          title="Story 9:16"
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+          </svg>
+        </button>
+      </div>
+
+      <AnimatePresence>
+        {showWeekRecap && (
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} style={{ overflow: 'hidden' }}>
+            <WeeklyRecap weekNum={currentWeek} onClose={() => setShowWeekRecap(false)} />
+          </motion.div>
+        )}
+        {showMonthRecap && !showWeekRecap && (
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} style={{ overflow: 'hidden' }}>
+            <MonthlyRecap monthIndex={currentMonthIndex} onClose={() => setShowMonthRecap(false)} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Diagnostic link */}
+      {!kpis.hasDiagnostic ? (
+        <Link to="/diagnostic" className="flex items-center gap-3 p-3.5 rounded-xl bg-brand/5 border border-brand/20 hover:bg-brand/10 transition-colors">
+          <span className="text-brand text-base">⚡</span>
+          <div>
+            <div className="text-sm font-semibold text-text-primary">Faire le test diagnostique</div>
+            <div className="text-xs text-text-muted">Profil CBL sur 4 axes — ~45 min</div>
+          </div>
+          <svg className="ml-auto text-text-faint" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </Link>
+      ) : kpis.diagnosticScore != null && (
+        <Link to="/diagnostic" className="flex items-center gap-3 p-3 rounded-xl bg-surface-2 border border-border hover:border-brand/20 transition-colors">
+          <div className="text-2xl font-bold text-brand tabular-nums">{kpis.diagnosticScore}</div>
+          <div>
+            <div className="text-sm font-semibold text-text-primary">Score diagnostic</div>
+            <div className="text-xs text-text-muted">Voir le profil →</div>
+          </div>
+        </Link>
+      )}
+    </div>
+  )
+}
+
+// ─── Stat badge ───────────────────────────────────────────────────────────────
+
 function StatBadge({ label, current, target, unit = '' }) {
-  const pct = Math.round((current / target) * 100)
+  const pct = Math.min(100, Math.round((current / target) * 100))
   return (
     <div className="glass glass-hover rounded-xl p-4">
       <div className="label mb-2">{label}</div>
@@ -160,9 +319,7 @@ function StatBadge({ label, current, target, unit = '' }) {
       </div>
       <div className="h-1 bg-surface-3 rounded-full overflow-hidden">
         <motion.div
-          initial={{ width: 0 }}
-          animate={{ width: `${pct}%` }}
-          transition={{ duration: 0.8, delay: 0.2 }}
+          initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 0.8, delay: 0.1 }}
           className="h-full bg-brand rounded-full"
         />
       </div>
@@ -171,155 +328,46 @@ function StatBadge({ label, current, target, unit = '' }) {
   )
 }
 
-function useKPIs() {
-  const [kpis, setKpis] = useState(null)
-  useEffect(() => {
-    const sessions = JSON.parse(localStorage.getItem('cbl_session_log') || '[]')
-    const coachLog = JSON.parse(localStorage.getItem('cbl_coach_log') || '[]')
-    const diagnostic = JSON.parse(localStorage.getItem('cbl_diagnostic') || 'null')
-    const now = new Date()
+// ─── Competition countdown ────────────────────────────────────────────────────
 
-    // Régularité 28j
-    const last28Sessions = sessions.filter(s => (now - new Date(s.date)) < 28 * 86400 * 1000)
-    const done28 = last28Sessions.filter(s => s.completed).length
-    const regularite = last28Sessions.length > 0 ? Math.round((done28 / last28Sessions.length) * 100) : null
-
-    // Séances cette semaine
-    const startOfWeek = new Date(now)
-    startOfWeek.setDate(now.getDate() - now.getDay())
-    startOfWeek.setHours(0, 0, 0, 0)
-    const thisWeekSessions = sessions.filter(s => new Date(s.date) >= startOfWeek)
-    const thisWeekDone = thisWeekSessions.filter(s => s.completed).length
-
-    // RPE moyen 7j
-    const last7 = coachLog.filter(l => (now - new Date(l.date)) < 7 * 86400 * 1000)
-    const rpeAvg = last7.length > 0
-      ? (last7.reduce((sum, l) => sum + (l.metrics?.rpe || 7), 0) / last7.length).toFixed(1)
-      : null
-
-    // Streak
-    let streak = 0
-    const completedDates = [...new Set(sessions.filter(s => s.completed).map(s => new Date(s.date).toDateString()))]
-    const sorted = completedDates.sort((a, b) => new Date(b) - new Date(a))
-    let prev = new Date(now)
-    prev.setHours(0, 0, 0, 0)
-    for (const d of sorted) {
-      const diff = Math.round((prev - new Date(d)) / 86400000)
-      if (diff <= 1) { streak++; prev = new Date(d) }
-      else break
-    }
-
-    setKpis({
-      regularite,
-      thisWeekDone,
-      rpeAvg,
-      streak,
-      diagnosticScore: diagnostic?.profile?.overall ?? null,
-      hasDiagnostic: !!diagnostic,
-    })
-  }, [])
-  return kpis
-}
-
-function KPIGrid({ kpis, onStory }) {
-  if (!kpis) return null
-
-  const items = [
-    {
-      label: 'Régularité 28j',
-      value: kpis.regularite != null ? `${kpis.regularite}%` : '—',
-      sub: kpis.regularite != null ? (kpis.regularite >= 75 ? 'En bonne voie' : 'À améliorer') : 'Pas encore de données',
-      color: kpis.regularite == null ? '#666' : kpis.regularite >= 75 ? '#00D47A' : '#FF9500',
-    },
-    {
-      label: 'Séances cette semaine',
-      value: `${kpis.thisWeekDone}`,
-      sub: kpis.thisWeekDone === 0 ? 'Aucune encore' : `${kpis.thisWeekDone} complétée${kpis.thisWeekDone > 1 ? 's' : ''}`,
-      color: kpis.thisWeekDone > 0 ? '#00D4FF' : '#666',
-    },
-    {
-      label: 'RPE moyen 7j',
-      value: kpis.rpeAvg ?? '—',
-      sub: kpis.rpeAvg != null
-        ? kpis.rpeAvg > 8.5 ? '⚠ Charge élevée' : kpis.rpeAvg < 5 ? 'Sous-charge' : 'Zone optimale'
-        : 'Pas de débriefs récents',
-      color: kpis.rpeAvg == null ? '#666' : kpis.rpeAvg > 8.5 ? '#FF3D3D' : kpis.rpeAvg < 5 ? '#FF9500' : '#00D47A',
-    },
-    {
-      label: 'Streak entraînement',
-      value: `${kpis.streak}j`,
-      sub: kpis.streak === 0 ? 'Lance une séance' : kpis.streak >= 5 ? 'En feu 🔥' : 'Continue !',
-      color: kpis.streak >= 3 ? '#FF9500' : kpis.streak > 0 ? '#00D4FF' : '#666',
-    },
-  ]
+function CompetitionBlock() {
+  const compDate = new Date('2026-09-01')
+  const today = new Date()
+  const diff = Math.ceil((compDate - today) / (1000 * 60 * 60 * 24))
+  const pct = Math.max(5, Math.min(95, (1 - diff / 150) * 100))
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-3">
-        <div className="label">KPIs</div>
-        <button
-          onClick={onStory}
-          className="flex items-center gap-1.5 text-xs text-text-muted hover:text-brand transition-colors px-2.5 py-1.5 rounded-lg bg-surface-2 border border-border hover:border-brand/30"
-        >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
-            <line x1="12" y1="18" x2="12" y2="18"/>
-          </svg>
-          Story 9:16
-        </button>
+    <div className="space-y-3">
+      <div className="flex items-end gap-3">
+        <div className="text-5xl font-bold text-brand tabular-nums">{diff}</div>
+        <div className="text-text-muted pb-1">jours</div>
       </div>
-      <div className="grid grid-cols-2 gap-3">
-        {items.map(item => (
-          <div key={item.label} className="glass rounded-xl p-4">
-            <div className="label mb-1 text-[11px]">{item.label}</div>
-            <div className="text-2xl font-bold tabular-nums" style={{ color: item.color }}>
-              {item.value}
-            </div>
-            <div className="text-[11px] text-text-faint mt-0.5">{item.sub}</div>
-          </div>
-        ))}
+      <div className="text-sm text-text-muted">CBL Open Qualifier 2026 — 1 sept. 2026</div>
+      <div className="h-1.5 bg-surface-3 rounded-full overflow-hidden">
+        <div className="h-full bg-brand rounded-full transition-all" style={{ width: `${pct}%` }} />
       </div>
-      {/* Diagnostic CTA if not done */}
-      {!kpis.hasDiagnostic && (
-        <Link
-          to="/diagnostic"
-          className="mt-3 flex items-center gap-3 p-3.5 rounded-xl bg-brand/5 border border-brand/20 hover:bg-brand/10 transition-colors"
-        >
-          <div className="w-8 h-8 rounded-lg bg-brand/20 flex items-center justify-center flex-shrink-0 text-brand">
-            ⚡
-          </div>
-          <div>
-            <div className="text-sm font-semibold text-text-primary">Faire le test diagnostique</div>
-            <div className="text-xs text-text-muted">Calcule ton profil CBL sur 4 axes — ~45 min</div>
-          </div>
-          <svg className="ml-auto text-text-faint flex-shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <polyline points="9 18 15 12 9 6"/>
-          </svg>
-        </Link>
-      )}
-      {kpis.hasDiagnostic && kpis.diagnosticScore != null && (
-        <Link
-          to="/diagnostic"
-          className="mt-3 flex items-center gap-3 p-3.5 rounded-xl bg-surface-2 border border-border hover:border-brand/20 transition-colors"
-        >
-          <div className="text-2xl font-bold text-brand tabular-nums">{kpis.diagnosticScore}</div>
-          <div>
-            <div className="text-sm font-semibold text-text-primary">Score diagnostic</div>
-            <div className="text-xs text-text-muted">Voir le profil complet →</div>
-          </div>
-        </Link>
-      )}
+      <Link to="/profile" className="text-xs text-text-faint hover:text-brand transition-colors">
+        Voir le profil compétition →
+      </Link>
     </div>
   )
 }
+
+// ─── Main dashboard ───────────────────────────────────────────────────────────
 
 export default function Dashboard() {
   const today = new Date()
   const currentWeek = getWeekNumber(today)
   const phase = getPhaseForWeek(currentWeek)
   const template = getTemplateForWeek(currentWeek)
+  const currentMonthIndex = Math.min(2, Math.floor((currentWeek - 1) / 4))
+
   const [storyOpen, setStoryOpen] = useState(false)
-  const kpis = useKPIs()
+  const [sessionModalOpen, setSessionModalOpen] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
+  const [validatedToday, refreshValidated] = useSessionValidatedToday()
+
+  const kpis = useKPIs(refreshKey)
 
   const storageKey = 'cbl_availability'
   const [availability, setAvailability] = useState(() => {
@@ -335,37 +383,46 @@ export default function Dashboard() {
   }
 
   const sessionMap = assignSessionsToDays(availability, template)
-
+  const todaySessions = sessionMap[today.getDay()] || []
+  const todaySession = todaySessions[0] || null
   const maxes = athlete.maxes
   const targets = athlete.targets3months
 
+  const handleSessionSaved = () => {
+    setRefreshKey(k => k + 1)
+    refreshValidated()
+  }
+
+  // Plan week accordion icon
+  const planIcon = <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+  const kpiIcon = <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+  const trophyIcon = <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+  const targetIcon = <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6 space-y-6 animate-fade-in">
+    <div className="max-w-4xl mx-auto px-4 py-6 space-y-4 animate-fade-in">
       <StoryCard isOpen={storyOpen} onClose={() => setStoryOpen(false)} />
+      <SessionCompleteModal
+        isOpen={sessionModalOpen}
+        onClose={() => setSessionModalOpen(false)}
+        session={todaySession}
+        onSaved={handleSessionSaved}
+      />
 
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
           <div className="label mb-1">Semaine {currentWeek} / 12</div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            {phase ? phase.name : 'Plan CBL'}
-          </h1>
-          {phase && (
-            <p className="text-sm text-text-muted mt-1 max-w-md">{phase.objective}</p>
-          )}
+          <h1 className="text-2xl font-bold tracking-tight">{phase ? phase.name : 'Plan CBL'}</h1>
+          {phase && <p className="text-sm text-text-muted mt-1 max-w-md">{phase.objective}</p>}
         </div>
         <div className="flex flex-col items-end gap-1">
           {phase && (
-            <div
-              className="text-xs font-mono px-2.5 py-1 rounded-lg border"
-              style={{ color: phase.color, borderColor: phase.color + '40', backgroundColor: phase.color + '10' }}
-            >
+            <div className="text-xs font-mono px-2.5 py-1 rounded-lg border" style={{ color: phase.color, borderColor: phase.color + '40', backgroundColor: phase.color + '10' }}>
               {phase.focus.join(' · ')}
             </div>
           )}
-          <Link to="/plan" className="text-xs text-text-muted hover:text-brand transition-colors mt-1">
-            Voir le plan complet →
-          </Link>
+          <Link to="/plan" className="text-xs text-text-muted hover:text-brand mt-1">Voir le plan →</Link>
         </div>
       </div>
 
@@ -374,22 +431,17 @@ export default function Dashboard() {
         <div className="glass rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs text-text-muted">Progression macro</span>
-            <span className="text-xs font-mono text-text-muted">
-              {phase.weeks.indexOf(currentWeek) + 1} / {phase.weeks.length} semaines
-            </span>
+            <span className="text-xs font-mono text-text-muted">{phase.weeks.indexOf(currentWeek) + 1} / {phase.weeks.length} sem.</span>
           </div>
           <div className="flex gap-1">
-            {plan.macroPhases.map((p, pi) => (
+            {plan.macroPhases.map(p => (
               <div key={p.id} className="flex-1 h-1.5 rounded-full bg-surface-3 overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{
-                    backgroundColor: p.color,
-                    width: p.id === phase.id
-                      ? `${((phase.weeks.indexOf(currentWeek) + 1) / phase.weeks.length) * 100}%`
-                      : p.weeks[p.weeks.length - 1] < currentWeek ? '100%' : '0%'
-                  }}
-                />
+                <div className="h-full rounded-full transition-all duration-500" style={{
+                  backgroundColor: p.color,
+                  width: p.id === phase.id
+                    ? `${((phase.weeks.indexOf(currentWeek) + 1) / phase.weeks.length) * 100}%`
+                    : p.weeks[p.weeks.length - 1] < currentWeek ? '100%' : '0%'
+                }} />
               </div>
             ))}
           </div>
@@ -401,47 +453,95 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Two-column grid */}
-      <div className="grid md:grid-cols-2 gap-4">
-        {/* Availability picker */}
-        <AvailabilityPicker availability={availability} onChange={handleAvailabilityChange} />
-
-        {/* Weekly plan */}
-        <WeekPlan availability={availability} sessionMap={sessionMap} />
-      </div>
-
-      {/* Today's session CTA */}
-      {(() => {
-        const todaySessions = sessionMap[today.getDay()] || []
-        if (todaySessions.length === 0) return null
-        const s = todaySessions[0]
-        const st = SESSION_TYPES[s.type] || SESSION_TYPES.rest
-        return (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="glass rounded-2xl p-5 border border-brand/20 bg-brand/5 brand-glow"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="label mb-1" style={{ color: '#00D4FF' }}>Séance du jour</div>
-                <div className="text-lg font-bold">{s.name}</div>
-                <div className={`inline-block tag mt-2 ${st.bg}`}>{st.label}</div>
+      {/* Today's session CTA + "J'ai fait ma séance" */}
+      {todaySession && (
+        <div className="glass rounded-2xl p-5 border border-brand/20 bg-brand/5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <div className="label mb-0.5" style={{ color: '#00D4FF' }}>Séance du jour</div>
+              <div className="text-lg font-bold truncate">{todaySession.name}</div>
+              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                {(() => {
+                  const st = SESSION_TYPES[todaySession.type] || SESSION_TYPES.rest
+                  const est = estimateSessionDuration(todaySession)
+                  return (
+                    <>
+                      <span className={`tag text-xs px-2 py-0.5 rounded border ${st.bg}`}>{st.label}</span>
+                      {est && <span className="text-xs text-text-faint">⏱ ~{est} min</span>}
+                    </>
+                  )
+                })()}
               </div>
-              <Link to="/session" className="btn-primary flex items-center gap-2">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                  <polygon points="5 3 19 12 5 21 5 3"/>
-                </svg>
-                Démarrer
-              </Link>
+              {todaySession.intention && (
+                <p className="text-xs text-text-muted italic mt-2 leading-relaxed line-clamp-2">
+                  "{todaySession.intention}"
+                </p>
+              )}
             </div>
-          </motion.div>
-        )
-      })()}
+            <Link to="/session" className="btn-primary flex items-center gap-2 flex-shrink-0">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Go
+            </Link>
+          </div>
 
-      {/* Performance targets */}
-      <div>
-        <div className="label mb-3">Objectifs 3 mois</div>
+          {/* "J'ai fait ma séance" button */}
+          <div className="mt-4 pt-4 border-t border-border/50">
+            {validatedToday ? (
+              <div className="flex items-center gap-2 text-sm text-success">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                <span className="font-semibold">Séance validée</span>
+                <span className="text-text-faint">·  {validatedToday.duration}min · RPE {validatedToday.rpe}</span>
+              </div>
+            ) : (
+              <button
+                onClick={() => setSessionModalOpen(true)}
+                className="w-full py-3 rounded-xl font-bold text-sm bg-brand text-black hover:bg-brand/90 active:scale-98 transition-all"
+              >
+                ✓ J'ai fait ma séance
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* No session today but button still accessible */}
+      {!todaySession && (
+        <div className="glass rounded-2xl p-4 flex items-center gap-3">
+          <div className="flex-1">
+            <div className="text-sm font-medium text-text-muted">Pas de séance programmée aujourd'hui</div>
+            <div className="text-xs text-text-faint mt-0.5">Tu peux quand même valider une séance faite.</div>
+          </div>
+          {validatedToday ? (
+            <div className="text-xs text-success font-semibold">✓ {validatedToday.duration}min</div>
+          ) : (
+            <button
+              onClick={() => setSessionModalOpen(true)}
+              className="px-3 py-2 rounded-xl text-xs font-semibold bg-surface-2 border border-border hover:border-brand/30 hover:text-brand text-text-muted transition-all"
+            >
+              Valider une séance
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* ACCORDION: Plan de la semaine */}
+      <Accordion id="planSemaine" title="Plan de la semaine" icon={planIcon} badge={`${availability.length}j/sem`} defaultOpen={true}>
+        <AvailabilityPicker availability={availability} onChange={handleAvailabilityChange} />
+        <WeekPlan availability={availability} sessionMap={sessionMap} />
+      </Accordion>
+
+      {/* ACCORDION: KPIs */}
+      <Accordion id="kpis" title="KPIs" icon={kpiIcon} defaultOpen={false}>
+        <KPIGrid
+          kpis={kpis}
+          onStory={() => setStoryOpen(true)}
+          currentWeek={currentWeek}
+          currentMonthIndex={currentMonthIndex}
+        />
+      </Accordion>
+
+      {/* ACCORDION: Ma trajectoire */}
+      <Accordion id="trajectoire" title="Ma trajectoire" icon={targetIcon} defaultOpen={false}>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <StatBadge label="Tractions" current={maxes.pullUp.value} target={targets.pullUp.value} unit=" reps" />
           <StatBadge label="Muscle-up" current={maxes.muscleUp.value} target={targets.muscleUp.value} unit=" reps" />
@@ -449,63 +549,43 @@ export default function Dashboard() {
           <StatBadge label="Pompes" current={maxes.pushUp.value} target={targets.pushUp.value} unit=" reps" />
           <StatBadge label="Goblet @16kg" current={maxes.gobletSquat.value} target={targets.gobletSquat.value} unit=" reps" />
           <Link to="/stats" className="glass glass-hover rounded-xl p-4 flex flex-col items-center justify-center gap-2 text-text-muted hover:text-brand transition-colors">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
-            </svg>
-            <span className="text-xs font-medium">Voir les stats</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            <span className="text-xs font-medium">Toutes les stats</span>
           </Link>
         </div>
-      </div>
+      </Accordion>
 
-      {/* KPIs — Feature 4 */}
-      <KPIGrid kpis={kpis} onStory={() => setStoryOpen(true)} />
+      {/* ACCORDION: Prochaine compétition */}
+      <Accordion id="competition" title="Prochaine compétition" icon={trophyIcon} defaultOpen={false}>
+        <CompetitionBlock />
+      </Accordion>
 
-      {/* Quick access */}
+      {/* Quick access — always visible */}
       <div>
         <div className="label mb-3">Accès rapide</div>
-        <div className="grid grid-cols-2 gap-3">
-          <Link to="/circuits" className="glass glass-hover rounded-xl p-4 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-warn/10 border border-warn/20 flex items-center justify-center flex-shrink-0">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF9500" strokeWidth="2" strokeLinecap="round">
-                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-              </svg>
-            </div>
-            <div>
-              <div className="text-sm font-semibold">Circuits CBL</div>
-              <div className="text-xs text-text-muted">11 circuits importés</div>
-            </div>
-          </Link>
-          <Link to="/plan" className="glass glass-hover rounded-xl p-4 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-brand/10 border border-brand/20 flex items-center justify-center flex-shrink-0">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00D4FF" strokeWidth="2" strokeLinecap="round">
-                <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>
-              </svg>
-            </div>
-            <div>
-              <div className="text-sm font-semibold">Plan 3 mois</div>
-              <div className="text-xs text-text-muted">Macro · Méso · Micro</div>
-            </div>
-          </Link>
-          <Link to="/diagnostic" className="glass glass-hover rounded-xl p-4 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-success/10 border border-success/20 flex items-center justify-center flex-shrink-0">
-              <span className="text-base">⚡</span>
-            </div>
-            <div>
-              <div className="text-sm font-semibold">Diagnostic</div>
-              <div className="text-xs text-text-muted">Test profil 4 axes</div>
-            </div>
-          </Link>
-          <Link to="/coach" className="glass glass-hover rounded-xl p-4 flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-warn/10 border border-warn/20 flex items-center justify-center flex-shrink-0">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF9500" strokeWidth="2" strokeLinecap="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-              </svg>
-            </div>
-            <div>
-              <div className="text-sm font-semibold">Coach</div>
-              <div className="text-xs text-text-muted">Débrief · 18 scénarios</div>
-            </div>
-          </Link>
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { to: '/circuits', label: 'Circuits CBL', sub: '11 circuits', icon: <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>, color: '#FF9500', bg: 'bg-warn/10 border-warn/20' },
+            { to: '/progression', label: 'Progression', sub: 'Calendrier + historique', icon: <><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>, color: '#00D47A', bg: 'bg-success/10 border-success/20' },
+            { to: '/diagnostic', label: 'Diagnostic', sub: 'Profil 4 axes', text: '⚡', color: '#00D4FF', bg: 'bg-brand/10 border-brand/20' },
+            { to: '/coach', label: 'Coach', sub: 'Débrief séance', icon: <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>, color: '#FF9500', bg: 'bg-warn/10 border-warn/20' },
+          ].map(item => (
+            <Link key={item.to} to={item.to} className="glass glass-hover rounded-xl p-3.5 flex items-center gap-3">
+              <div className={`w-8 h-8 rounded-lg border flex items-center justify-center flex-shrink-0 ${item.bg}`}>
+                {item.text ? (
+                  <span style={{ fontSize: 14, color: item.color }}>{item.text}</span>
+                ) : (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={item.color} strokeWidth="2" strokeLinecap="round">
+                    {item.icon}
+                  </svg>
+                )}
+              </div>
+              <div>
+                <div className="text-sm font-semibold">{item.label}</div>
+                <div className="text-xs text-text-muted">{item.sub}</div>
+              </div>
+            </Link>
+          ))}
         </div>
       </div>
     </div>

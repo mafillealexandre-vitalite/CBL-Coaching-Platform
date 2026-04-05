@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import plan from '../data/coaching-plan.json'
+import { estimateSessionDuration } from '../utils/sessionUtils'
+import SessionExport from '../components/ui/SessionExport'
+import SessionCompleteModal from '../components/ui/SessionCompleteModal'
 
 function formatTime(seconds) {
   const m = Math.floor(seconds / 60)
@@ -221,6 +224,7 @@ export default function Session() {
   const [elapsed, setElapsed] = useState(0)
   const [running, setRunning] = useState(false)
   const [showSelector, setShowSelector] = useState(false)
+  const [showValidate, setShowValidate] = useState(false)
   const intervalRef = useRef(null)
 
   useEffect(() => {
@@ -251,30 +255,43 @@ export default function Session() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 space-y-5 animate-fade-in">
 
+      <SessionCompleteModal
+        isOpen={showValidate}
+        onClose={() => setShowValidate(false)}
+        session={session}
+      />
+
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
           <div className="label mb-1">Séance du jour</div>
           <h1 className="text-2xl font-bold tracking-tight">{session?.name || 'Choisir une séance'}</h1>
-          <div className="flex items-center gap-2 mt-1.5">
+          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
             {session && (
-              <span
-                className="tag text-xs px-2 py-0.5 rounded border"
-                style={{ color: sessionColor, borderColor: sessionColor + '40', backgroundColor: sessionColor + '10' }}
-              >
+              <span className="tag text-xs px-2 py-0.5 rounded border" style={{ color: sessionColor, borderColor: sessionColor + '40', backgroundColor: sessionColor + '10' }}>
                 {session.type}
               </span>
             )}
             <span className="text-xs text-text-muted">Semaine {week}</span>
+            {session && (() => {
+              const est = estimateSessionDuration(session)
+              return est ? <span className="text-xs text-text-faint">⏱ ~{est} min</span> : null
+            })()}
           </div>
         </div>
-        <button
-          onClick={() => setShowSelector(s => !s)}
-          className="btn-ghost text-xs"
-        >
+        <button onClick={() => setShowSelector(s => !s)} className="btn-ghost text-xs">
           {showSelector ? 'Fermer' : 'Changer'}
         </button>
       </div>
+
+      {/* Intention */}
+      {session?.intention && (
+        <div className="px-4 py-3 rounded-xl border-l-2 bg-surface-2/50" style={{ borderColor: sessionColor }}>
+          <p className="text-xs text-text-muted italic leading-relaxed">
+            "{session.intention}"
+          </p>
+        </div>
+      )}
 
       {/* Session selector */}
       <AnimatePresence>
@@ -356,13 +373,33 @@ export default function Session() {
         </div>
       )}
 
+      {/* Validate + Export */}
+      <div className="flex gap-3">
+        {pct === 100 ? (
+          <button
+            onClick={() => setShowValidate(true)}
+            className="flex-1 py-3 rounded-xl bg-success font-bold text-black text-sm hover:bg-success/90 transition-all"
+          >
+            ✓ Valider la séance
+          </button>
+        ) : (
+          <button
+            onClick={() => setShowValidate(true)}
+            className="flex-1 py-2.5 rounded-xl bg-surface-2 border border-border text-sm font-medium text-text-muted hover:text-text-primary hover:border-brand/20 transition-all"
+          >
+            J'ai fait cette séance
+          </button>
+        )}
+        {session && <SessionExport session={session} week={week} />}
+      </div>
+
       {/* Reset session */}
       {totalCompleted > 0 && (
         <button
           onClick={() => { setCompleted({}); setElapsed(0); setRunning(false) }}
-          className="w-full btn-ghost text-danger hover:text-danger"
+          className="w-full btn-ghost text-danger hover:text-danger text-sm"
         >
-          Réinitialiser la séance
+          Réinitialiser
         </button>
       )}
     </div>

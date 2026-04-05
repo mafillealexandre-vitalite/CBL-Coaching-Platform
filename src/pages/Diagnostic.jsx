@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { computeProfile, getDiagnosisSummary } from '../utils/diagnosticEngine'
+import plan from '../data/coaching-plan.json'
 
 const PROTOCOL = [
   {
@@ -284,12 +285,127 @@ function ProfileRadar({ scores }) {
   )
 }
 
+// ─── Jalon 1 — Circuit-only (semaine 2) ──────────────────────────────────────
+
+function Jalon1Circuit({ onDone }) {
+  const [set, setSet] = useState(1) // 1 or 2
+  const [set1Time, setSet1Time] = useState(null)
+  const [set1Reps, setSet1Reps] = useState(null)
+  const [phase, setPhase] = useState('start') // start | running | rest | set2 | done
+  const [elapsed, setElapsed] = useState(0)
+  const [reps, setReps] = useState('')
+  const intervalRef = useRef(null)
+
+  const startTimer = () => {
+    setElapsed(0)
+    setPhase('running')
+    intervalRef.current = setInterval(() => setElapsed(e => e + 1), 1000)
+  }
+  const stopTimer = () => {
+    clearInterval(intervalRef.current)
+    setPhase(set === 1 ? 'rest' : 'done_input')
+  }
+
+  const confirmSet1 = () => {
+    setSet1Time(elapsed)
+    setSet1Reps(parseInt(reps) || 0)
+    setReps('')
+    setElapsed(0)
+    setSet(2)
+    setPhase('rest')
+  }
+  const skipRest = () => setPhase(set === 1 ? 'set2' : 'done_input')
+
+  const finishAll = (set2Time, set2Reps) => {
+    const baseline = JSON.parse(localStorage.getItem('cbl_diagnostic') || 'null')
+    const baselineCircuitTime = baseline?.raw?.circuitTime || null
+
+    const result = {
+      type: 'jalon1_circuit',
+      date: new Date().toISOString(),
+      set1: { time: set1Time, reps: set1Reps },
+      set2: { time: set2Time, reps: parseInt(set2Reps) || 0 },
+      baselineCircuitTime,
+      delta: baselineCircuitTime ? baselineCircuitTime - set1Time : null,
+    }
+    const history = JSON.parse(localStorage.getItem('cbl_meso_tests') || '[]')
+    history.push(result)
+    localStorage.setItem('cbl_meso_tests', JSON.stringify(history))
+    onDone(result)
+  }
+
+  const fmt = (s) => `${Math.floor(s / 60).toString().padStart(2,'0')}:${(s % 60).toString().padStart(2,'0')}`
+
+  return (
+    <div className="space-y-5">
+      <div className="text-center">
+        <div className="text-xs text-text-faint uppercase tracking-wider mb-1">
+          {set === 1 ? 'Set 1 / 2' : 'Set 2 / 2'}
+        </div>
+        <div className={`text-6xl font-bold tabular-nums ${elapsed > 360 ? 'text-danger' : 'text-brand'}`}>
+          {fmt(elapsed)}
+        </div>
+        {elapsed > 360 && <div className="text-xs text-danger mt-1">⚠ Temps limite (6 min) dépassé</div>}
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 text-sm">
+        {['10 Tractions', '20 Dips', '30 Pompes', '20 Squats'].map(n => (
+          <div key={n} className="p-2 rounded-lg bg-surface-2 text-text-muted border border-border text-center text-xs">{n}</div>
+        ))}
+      </div>
+
+      {phase === 'start' && (
+        <button onClick={startTimer} className="btn-primary w-full">Lancer Set {set}</button>
+      )}
+      {phase === 'running' && (
+        <button onClick={stopTimer} className="w-full py-3 rounded-xl bg-danger/10 border border-danger/30 text-danger font-bold">
+          Terminer le Set {set}
+        </button>
+      )}
+      {(phase === 'rest' || phase === 'done_input') && set === 1 && (
+        <div className="space-y-3">
+          <div>
+            <label className="label mb-1 block">Reps Set 1 (sur 80)</label>
+            <input type="number" min="0" max="80" value={reps} onChange={e => setReps(e.target.value)} placeholder="80"
+              className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3 text-xl text-center focus:outline-none focus:border-brand text-text-primary" />
+          </div>
+          <button onClick={confirmSet1} disabled={!reps} className="btn-primary w-full disabled:opacity-40">
+            Enregistrer Set 1 — {fmt(elapsed)}
+          </button>
+        </div>
+      )}
+      {phase === 'rest' && set === 2 && (
+        <div className="glass p-5 rounded-xl border border-border text-center space-y-3">
+          <div className="text-sm text-text-muted">Récupération 3 min avant le Set 2</div>
+          <RestTimer seconds={180} onDone={() => setPhase('set2')} />
+        </div>
+      )}
+      {phase === 'set2' && (
+        <button onClick={startTimer} className="btn-primary w-full">Lancer Set 2</button>
+      )}
+      {phase === 'done_input' && set === 2 && (
+        <div className="space-y-3">
+          <div>
+            <label className="label mb-1 block">Reps Set 2 (sur 80)</label>
+            <input type="number" min="0" max="80" value={reps} onChange={e => setReps(e.target.value)} placeholder="80"
+              className="w-full bg-surface-2 border border-border rounded-xl px-4 py-3 text-xl text-center focus:outline-none focus:border-brand text-text-primary" />
+          </div>
+          <button onClick={() => finishAll(elapsed, reps)} disabled={!reps} className="btn-primary w-full disabled:opacity-40">
+            Terminer le Jalon 1
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function Diagnostic() {
-  const [phase, setPhase] = useState('intro') // intro | testing | rest | results
+  const [phase, setPhase] = useState('intro') // intro | testing | rest | results | jalon1 | jalon1_done
   const [currentStep, setCurrentStep] = useState(0)
   const [results, setResults] = useState({})
   const [profile, setProfile] = useState(null)
   const [showRest, setShowRest] = useState(false)
+  const [jalon1Result, setJalon1Result] = useState(null)
 
   // Load existing diagnostic
   useEffect(() => {
@@ -435,7 +551,76 @@ export default function Diagnostic() {
     )
   }
 
+  // Jalon 1 done result screen
+  if (phase === 'jalon1_done' && jalon1Result) {
+    const delta = jalon1Result.delta
+    const set1Fmt = (s) => `${Math.floor(s / 60)}'${(s % 60).toString().padStart(2, '0')}`
+    return (
+      <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-6">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          <div className="flex items-center gap-3 mb-1">
+            <div className="w-8 h-8 rounded-lg bg-success/20 flex items-center justify-center text-success">✓</div>
+            <h1 className="text-2xl font-bold text-text-primary">Jalon 1 — Semaine 2</h1>
+          </div>
+          <p className="text-text-muted text-sm ml-11">Test circuit lactique × 2 sets</p>
+        </motion.div>
+
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            { label: 'Set 1', value: set1Fmt(jalon1Result.set1.time), sub: `${jalon1Result.set1.reps}/80 reps`, color: '#00D4FF' },
+            { label: 'Set 2', value: set1Fmt(jalon1Result.set2.time), sub: `${jalon1Result.set2.reps}/80 reps`, color: '#FF9500' },
+          ].map(item => (
+            <div key={item.label} className="glass p-4 rounded-xl border border-border text-center">
+              <div className="text-xs text-text-faint mb-1">{item.label}</div>
+              <div className="text-3xl font-bold tabular-nums" style={{ color: item.color }}>{item.value}</div>
+              <div className="text-xs text-text-muted mt-1">{item.sub}</div>
+            </div>
+          ))}
+        </div>
+
+        {delta !== null && (
+          <div className={`p-4 rounded-xl border ${delta > 0 ? 'bg-success/10 border-success/20' : 'bg-warn/10 border-warn/20'}`}>
+            <div className={`text-sm font-semibold ${delta > 0 ? 'text-success' : 'text-warn'}`}>
+              {delta > 0
+                ? `⚡ +${delta}s de mieux vs diagnostic J0 — belle progression lactique`
+                : delta < 0
+                  ? `⚠️ ${Math.abs(delta)}s plus lent qu'au diagnostic — normal en semaine de charge`
+                  : 'Même temps qu\'au diagnostic — base stable'
+              }
+            </div>
+          </div>
+        )}
+
+        <button onClick={() => { setPhase('intro'); setJalon1Result(null) }} className="btn-primary w-full">
+          Retour
+        </button>
+      </div>
+    )
+  }
+
+  if (phase === 'jalon1') {
+    return (
+      <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-5">
+        <div>
+          <div className="label mb-1">Jalon 1 — Semaine 2</div>
+          <h1 className="text-2xl font-bold text-text-primary">Circuit lactique × 2 sets</h1>
+          <p className="text-text-muted text-sm mt-1">
+            Pas de test de force max. Uniquement le circuit CBL chronométré, deux fois.
+          </p>
+        </div>
+        <div className="glass p-5 rounded-2xl border border-border">
+          <Jalon1Circuit onDone={(result) => { setJalon1Result(result); setPhase('jalon1_done') }} />
+        </div>
+        <button onClick={() => setPhase('intro')} className="w-full btn-ghost text-sm">Annuler</button>
+      </div>
+    )
+  }
+
   if (phase === 'intro') {
+    // Compute current plan week for jalon hint
+    const currentWeek = Math.max(1, Math.ceil((new Date() - new Date(plan.meta.startDate)) / (1000 * 60 * 60 * 24 * 7)))
+    const currentJalon = plan.jalons?.find(j => j.week === currentWeek || (currentWeek >= j.week - 1 && currentWeek <= j.week + 1))
+
     return (
       <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-6">
         <div>
@@ -444,6 +629,41 @@ export default function Diagnostic() {
             Point d'entrée du plan CBL — à faire une fois, puis en fin de chaque bloc méso.
           </p>
         </div>
+
+        {/* Jalons overview */}
+        <div className="glass p-4 rounded-xl border border-border">
+          <div className="text-sm font-semibold text-text-primary mb-3">Calendrier des jalons</div>
+          <div className="space-y-2">
+            {(plan.jalons || []).map(j => {
+              const isCurrent = Math.abs(currentWeek - j.week) <= 1
+              return (
+                <div key={j.id} className={`flex items-start gap-3 p-2 rounded-lg ${isCurrent ? 'bg-brand/10 border border-brand/20' : ''}`}>
+                  <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${isCurrent ? 'bg-brand' : 'bg-surface-3'}`} />
+                  <div className="flex-1 min-w-0">
+                    <div className={`text-sm font-medium ${isCurrent ? 'text-brand' : 'text-text-muted'}`}>{j.label}</div>
+                    <div className="text-xs text-text-faint">{j.description}</div>
+                  </div>
+                  <div className="text-xs text-text-faint flex-shrink-0">S{j.week} · ~{j.estimatedMinutes}min</div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Jalon 1 shortcut (only show if around week 2) */}
+        {currentWeek >= 1 && currentWeek <= 3 && (
+          <button
+            onClick={() => setPhase('jalon1')}
+            className="w-full flex items-center gap-3 p-4 rounded-xl bg-warn/10 border border-warn/20 hover:bg-warn/15 transition-colors text-left"
+          >
+            <div className="w-9 h-9 rounded-lg bg-warn/20 flex items-center justify-center flex-shrink-0 text-warn font-bold">1</div>
+            <div>
+              <div className="text-sm font-semibold text-text-primary">Jalon 1 — Circuit lactique</div>
+              <div className="text-xs text-text-muted">Circuit test × 2 sets · ~25 min · Semaine 2</div>
+            </div>
+            <svg className="ml-auto text-text-faint" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        )}
 
         {/* Existing diagnostic */}
         {profile && (

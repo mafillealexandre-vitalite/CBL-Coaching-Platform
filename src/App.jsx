@@ -9,6 +9,7 @@ import Stats from './pages/Stats'
 import Profile from './pages/Profile'
 import Diagnostic from './pages/Diagnostic'
 import Coach from './pages/Coach'
+import Progression from './pages/Progression'
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -58,6 +59,7 @@ export default function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/diagnostic" element={<Diagnostic />} />
             <Route path="/coach" element={<Coach />} />
+            <Route path="/progression" element={<Progression />} />
           </Routes>
         </main>
       </div>
