@@ -289,12 +289,11 @@ export default function Coach() {
 
       {tab === 'history' && (
         <div className="space-y-6">
-          <div className="space-y-4">
+          <div className="space-y-3">
             <h2 className="font-semibold text-text-primary">Débriefs athlète</h2>
             <AthleteDebriefs />
           </div>
-
-          <div className="space-y-4">
+          <div className="space-y-3">
             <h2 className="font-semibold text-text-primary">Historique séances</h2>
             <SessionLog />
             <CoachLogList />
@@ -332,81 +331,48 @@ export default function Coach() {
   )
 }
 
-const SESSION_TYPE_COLORS = {
-  force: '#00D4FF', lactate: '#FF3D3D', specificity: '#FF9500',
-  simulation: '#FF3D3D', recovery: '#00D47A',
-}
-const RPE_LABELS_SHORT = ['', 'TL', 'L', 'Mod', 'AD', 'Dur', 'Dur+', 'TDur', 'Max−', 'Max', 'MAX']
+const SESSION_TYPE_COLORS_DEBRIEF = { force: '#0EA5E9', lactate: '#EF4444', specificity: '#F59E0B', simulation: '#EF4444', recovery: '#10B981' }
 
 function AthleteDebriefs() {
   const [debriefs, setDebriefs] = useState([])
   const [expanded, setExpanded] = useState(null)
-
   useEffect(() => {
     const d = JSON.parse(localStorage.getItem('cbl_debriefs') || '[]')
     setDebriefs(d.slice().reverse())
   }, [])
-
-  if (debriefs.length === 0) {
-    return (
-      <div className="p-5 rounded-xl bg-surface-2 border border-border text-center">
-        <div className="text-text-faint text-sm">Aucun débrief enregistré.</div>
-        <div className="text-xs text-text-faint mt-1">
-          Après chaque séance, clique sur "C'est fait ✓" pour enregistrer ton retour.
-        </div>
-      </div>
-    )
-  }
-
+  if (debriefs.length === 0) return (
+    <div className="p-5 rounded-xl bg-surface-2 border border-border text-center">
+      <div className="text-text-faint text-sm">Aucun débrief encore.</div>
+      <div className="text-xs text-text-faint mt-1">Après chaque séance, clique sur "C'est fait ✓" pour enregistrer ton retour.</div>
+    </div>
+  )
   return (
     <div className="space-y-2">
       {debriefs.map((d, i) => {
-        const color = SESSION_TYPE_COLORS[d.sessionType] || '#888'
-        const isExpanded = expanded === d.id
-        const rpeLabel = RPE_LABELS_SHORT[d.rpe] || `${d.rpe}`
+        const color = SESSION_TYPE_COLORS_DEBRIEF[d.sessionType] || '#94A3B8'
+        const isExp = expanded === d.id
         return (
-          <motion.div
-            key={d.id}
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.04 }}
-            className="glass rounded-xl border border-border overflow-hidden"
-          >
-            <button
-              className="w-full flex items-center gap-3 p-3.5 text-left"
-              onClick={() => setExpanded(isExpanded ? null : d.id)}
-            >
+          <motion.div key={d.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }} className="glass rounded-xl border border-border overflow-hidden">
+            <button className="w-full flex items-center gap-3 p-3.5 text-left" onClick={() => setExpanded(isExp ? null : d.id)}>
               <div className="w-1 self-stretch rounded-full flex-shrink-0" style={{ backgroundColor: color, minHeight: 16 }} />
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-semibold truncate">{d.sessionName}</div>
-                <div className="text-xs text-text-faint">
-                  {new Date(d.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}
-                  {d.week && <span> · Sem. {d.week}</span>}
-                </div>
+                <div className="text-xs text-text-faint">{new Date(d.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}{d.week ? ` · Sem. ${d.week}` : ''}</div>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <span className="text-xs font-mono text-text-muted">{d.duration}min</span>
-                <span className="text-xs font-bold px-1.5 py-0.5 rounded" style={{ color, backgroundColor: color + '20' }}>
-                  {rpeLabel} {d.rpe}/10
-                </span>
+                <span className="text-xs font-bold px-1.5 py-0.5 rounded" style={{ color, backgroundColor: color + '20' }}>{d.rpe}/10</span>
               </div>
             </button>
-            {isExpanded && d.note && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="px-4 pb-3 pt-0 border-t border-border"
-              >
+            {isExp && d.note && (
+              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="px-4 pb-3 border-t border-border overflow-hidden">
                 <p className="text-sm text-text-muted pt-3 italic">"{d.note}"</p>
               </motion.div>
             )}
           </motion.div>
         )
       })}
-
-      {/* Citation */}
-      <div className="pt-3 text-center">
+      <div className="pt-2 text-center">
         <p className="text-[11px] text-text-faint italic">"Chaque répétition compte. Même celle dont tu n'avais pas envie."</p>
       </div>
     </div>

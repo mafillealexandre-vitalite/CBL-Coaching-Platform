@@ -4,52 +4,41 @@ import html2canvas from 'html2canvas'
 import { estimateSessionDuration } from '../../utils/sessionUtils'
 import { sessionToFit, downloadFit } from '../../utils/fitExport'
 
-// ─── Bouton export Garmin (FIT) ───────────────────────────────────────────────
-
 export function GarminExportButton({ session }) {
-  const [status, setStatus] = useState('idle') // idle | ok | error
-
+  const [status, setStatus] = useState('idle')
   const handleExport = () => {
     try {
       const fitBytes = sessionToFit(session)
-      const filename = `CBL-${(session?.name || 'seance').replace(/\s+/g, '-')}.fit`
-      downloadFit(fitBytes, filename)
+      downloadFit(fitBytes, `CBL-${(session?.name || 'seance').replace(/\s+/g, '-')}.fit`)
       setStatus('ok')
-      setTimeout(() => setStatus('idle'), 3000)
+      setTimeout(() => setStatus('idle'), 4000)
     } catch (e) {
-      console.error('FIT export error:', e)
-      setStatus('error')
+      console.error(e); setStatus('error')
       setTimeout(() => setStatus('idle'), 3000)
     }
   }
-
   return (
     <div className="space-y-2">
       <button
         onClick={handleExport}
         className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-semibold transition-all ${
-          status === 'ok'
-            ? 'border-success/30 bg-success/10 text-success'
-            : status === 'error'
-            ? 'border-danger/30 bg-danger/10 text-danger'
-            : 'border-border bg-surface-2 text-text-primary hover:border-brand/30 hover:text-brand'
+          status === 'ok' ? 'border-success/30 bg-success/10 text-success' :
+          status === 'error' ? 'border-danger/30 bg-danger/10 text-danger' :
+          'border-border bg-surface-2 text-text-primary hover:border-brand/30 hover:text-brand'
         }`}
       >
-        {/* Garmin icon approximé */}
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-          <circle cx="12" cy="12" r="10"/>
-          <path d="M12 8v4l3 3"/>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
         </svg>
         {status === 'ok' ? 'Fichier .fit téléchargé ✓' : status === 'error' ? 'Erreur export' : 'Exporter pour Garmin (.fit)'}
       </button>
-
       {status === 'ok' && (
-        <div className="text-xs text-text-faint leading-relaxed space-y-1">
-          <div className="font-semibold text-text-muted">Comment l'envoyer sur ta montre :</div>
-          <div>1. Ouvre <span className="text-brand">Garmin Connect</span> (web ou mobile)</div>
+        <div className="text-xs text-text-faint space-y-0.5 leading-relaxed">
+          <div className="font-semibold text-text-muted">Importer dans Garmin Connect :</div>
+          <div>1. Ouvre Garmin Connect (web ou mobile)</div>
           <div>2. Menu → Entraînements → Importer</div>
-          <div>3. Sélectionne le fichier <code className="text-brand font-mono text-[10px]">.fit</code></div>
-          <div>4. Sync ta montre — la séance apparaît dans "Entraînements planifiés"</div>
+          <div>3. Sélectionne le fichier <span className="font-mono text-brand">.fit</span></div>
+          <div>4. Synchronise ta montre</div>
         </div>
       )}
     </div>
@@ -388,12 +377,6 @@ export default function SessionExport({ session, week }) {
               <p className="text-xs text-white/30 text-center">
                 Fais une capture d'écran ou utilise le bouton PNG pour exporter en haute résolution.
               </p>
-
-              {/* Export Garmin */}
-              <div className="bg-white/5 rounded-xl p-4">
-                <div className="text-xs text-white/50 mb-3 font-semibold uppercase tracking-wider">Export Garmin</div>
-                <GarminExportButton session={session} />
-              </div>
             </motion.div>
           </motion.div>
         )}

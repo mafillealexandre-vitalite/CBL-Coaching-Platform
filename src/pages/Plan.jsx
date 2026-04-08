@@ -179,258 +179,111 @@ function WeekDetail({ week }) {
   )
 }
 
-// ─── Questionnaire d'adaptation du plan ──────────────────────────────────────
+// ─── Questionnaire adaptation plan ───────────────────────────────────────────
 
 const QUESTIONS = [
-  {
-    id: 'objectif',
-    label: 'Objectif principal',
-    type: 'chips',
-    options: ['Force max', 'Muscle-up', 'Endurance', 'Global CBL'],
-  },
-  {
-    id: 'priorite',
-    label: 'Focus de la semaine',
-    type: 'chips',
-    options: ['Tractions', 'Muscle-up', 'Dips', 'Circuit', 'Récupération'],
-  },
-  {
-    id: 'disponibilite',
-    label: 'Jours disponibles cette semaine',
-    type: 'number',
-    min: 1, max: 6,
-  },
-  {
-    id: 'contrainte',
-    label: 'Contrainte physique ou logistique ?',
-    type: 'text',
-    placeholder: 'Douleur, matériel manquant, temps limité...',
-  },
-  {
-    id: 'fatigue',
-    label: 'Niveau de fatigue actuel',
-    type: 'scale',
-    min: 1, max: 5,
-    labels: ['Frais', '', 'Moyen', '', 'Épuisé'],
-  },
-  {
-    id: 'horizon',
-    label: 'Semaines avant la prochaine compétition / test',
-    type: 'number',
-    min: 1, max: 20,
-  },
-  {
-    id: 'intention',
-    label: 'Quel type de séance te correspond le mieux ?',
-    type: 'chips',
-    options: ['Intensité max', 'Progression propre', 'Volume', 'Récup active'],
-  },
+  { id: 'objectif',      label: 'Objectif principal',                      type: 'chips',  options: ['Force max', 'Muscle-up', 'Endurance', 'Global CBL'] },
+  { id: 'priorite',      label: 'Focus de la semaine',                     type: 'chips',  options: ['Tractions', 'Muscle-up', 'Dips', 'Circuit', 'Récupération'] },
+  { id: 'disponibilite', label: 'Jours disponibles cette semaine',         type: 'number', min: 1, max: 6 },
+  { id: 'contrainte',    label: 'Contrainte physique ou logistique ?',     type: 'text',   placeholder: 'Douleur, matériel manquant, temps limité...' },
+  { id: 'fatigue',       label: 'Niveau de fatigue actuel',                type: 'scale',  min: 1, max: 5, labels: ['Frais', '', 'Moyen', '', 'Épuisé'] },
+  { id: 'horizon',       label: 'Semaines avant la prochaine compétition', type: 'number', min: 1, max: 20 },
+  { id: 'intention',     label: 'Quel type de séance te correspond ?',     type: 'chips',  options: ['Intensité max', 'Progression propre', 'Volume', 'Récup active'] },
 ]
 
-function generatePlanAction(answers) {
+function generatePlanAction(a) {
   const actions = []
-  const fatigue = answers.fatigue || 3
-  const dispo = answers.disponibilite || 4
-  const focus = answers.priorite || ''
-  const horizon = answers.horizon || 8
-  const intention = answers.intention || ''
-  const contrainte = answers.contrainte?.trim() || ''
-
-  // Charge selon fatigue
-  if (fatigue >= 4) {
-    actions.push({ color: '#FF9500', text: 'Réduis le volume de 20%. Priorité : qualité des répétitions, pas la quantité.' })
-  } else if (fatigue <= 2) {
-    actions.push({ color: '#00D47A', text: 'Tu es frais. C\'est le bon moment pour une séance intense ou un test de performance.' })
-  }
-
-  // Focus
-  if (focus === 'Muscle-up') {
-    actions.push({ color: '#00D4FF', text: 'Bloc muscle-up en début de séance, après l\'échauffement, quand tu es le plus frais.' })
-  } else if (focus === 'Tractions') {
-    actions.push({ color: '#00D4FF', text: 'Tractions lestées ou sur pause 2s en haut. Vise la qualité, pas le max.' })
-  } else if (focus === 'Récupération') {
-    actions.push({ color: '#00D47A', text: 'Semaine de récupération active : volume –30%, intensité douce, mobilité.' })
-  } else if (focus === 'Circuit') {
-    actions.push({ color: '#FF9500', text: 'Intègre 2 passages de circuit CBL complet. Chrono et note-le pour comparer.' })
-  }
-
-  // Disponibilité
-  if (dispo <= 2) {
-    actions.push({ color: '#FF9500', text: `${dispo} jours : concentre les séances sur la force (lundi) et la spécificité (jeudi).` })
-  } else if (dispo >= 5) {
-    actions.push({ color: '#00D4FF', text: `${dispo} jours : tu peux te permettre un jour de récup active entre chaque bloc intensif.` })
-  }
-
-  // Horizon
-  if (horizon <= 3) {
-    actions.push({ color: '#FF3D3D', text: 'Compétition proche. Stop progression de charge. Affûtage : intensité modérée, volume bas.' })
-  } else if (horizon >= 10) {
-    actions.push({ color: '#00D4FF', text: 'Horizon large. Progresse sur la force de base cette semaine sans pression de perf.' })
-  }
-
-  // Contrainte
-  if (contrainte && contrainte.length > 2) {
-    actions.push({ color: '#888', text: `Contrainte notée : "${contrainte}". Adapte en conséquence, n'aggrave rien.` })
-  }
-
-  // Intention
-  if (intention === 'Intensité max') {
-    actions.push({ color: '#FF3D3D', text: 'Séance à haute intensité : RPE cible 8–9. Bien récupérer 48h après.' })
-  } else if (intention === 'Récup active') {
-    actions.push({ color: '#00D47A', text: 'Récup active : 30 min à RPE 4–5. Tractions légères + mobilité.' })
-  }
-
-  // Fallback
-  if (actions.length === 0) {
-    actions.push({ color: '#00D4FF', text: 'Plan standard. Suis le template de la semaine en cours.' })
-  }
-
+  if ((a.fatigue || 3) >= 4) actions.push({ color: '#F59E0B', text: 'Réduis le volume de 20 %. Priorité : qualité des répétitions, pas la quantité.' })
+  else if ((a.fatigue || 3) <= 2) actions.push({ color: '#10B981', text: 'Tu es frais. C\'est le bon moment pour une séance intense ou un test de performance.' })
+  if (a.priorite === 'Muscle-up') actions.push({ color: '#0EA5E9', text: 'Bloc muscle-up en début de séance, après l\'échauffement, quand tu es le plus frais.' })
+  else if (a.priorite === 'Tractions') actions.push({ color: '#0EA5E9', text: 'Tractions lestées ou pause 2s en haut. Vise la qualité, pas le max.' })
+  else if (a.priorite === 'Récupération') actions.push({ color: '#10B981', text: 'Semaine de récup active : volume –30 %, intensité douce, mobilité.' })
+  else if (a.priorite === 'Circuit') actions.push({ color: '#F59E0B', text: 'Intègre 2 passages de circuit CBL complet. Chrono et note-le.' })
+  if ((a.disponibilite || 4) <= 2) actions.push({ color: '#F59E0B', text: `${a.disponibilite || 2} jours : concentre-toi sur force (lundi) et spécificité (jeudi).` })
+  if ((a.horizon || 8) <= 3) actions.push({ color: '#EF4444', text: 'Compétition proche. Stop progression de charge. Affûtage : intensité modérée, volume bas.' })
+  if (a.contrainte?.trim()?.length > 2) actions.push({ color: '#94A3B8', text: `Contrainte notée : "${a.contrainte.trim()}". Adapte, n'aggrave rien.` })
+  if (a.intention === 'Intensité max') actions.push({ color: '#EF4444', text: 'Séance à haute intensité : RPE cible 8–9. Bien récupérer 48h après.' })
+  if (actions.length === 0) actions.push({ color: '#0EA5E9', text: 'Plan standard. Suis le template de la semaine en cours.' })
   return actions.slice(0, 5)
 }
 
 function PlanQuestionnaire() {
-  const savedKey = 'cbl_plan_answers'
-  const [answers, setAnswers] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(savedKey) || '{}') } catch { return {} }
-  })
+  const KEY = 'cbl_plan_answers'
+  const [answers, setAnswers] = useState(() => { try { return JSON.parse(localStorage.getItem(KEY) || '{}') } catch { return {} } })
   const [result, setResult] = useState(null)
-  const [submitted, setSubmitted] = useState(false)
-
-  const setAnswer = (id, value) => setAnswers(prev => ({ ...prev, [id]: value }))
+  const set = (id, v) => setAnswers(p => ({ ...p, [id]: v }))
 
   const handleSubmit = () => {
-    localStorage.setItem(savedKey, JSON.stringify(answers))
+    localStorage.setItem(KEY, JSON.stringify(answers))
     setResult(generatePlanAction(answers))
-    setSubmitted(true)
   }
 
-  const handleReset = () => {
-    setSubmitted(false)
-    setResult(null)
-  }
-
-  if (submitted && result) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="space-y-4"
-      >
-        <div className="flex items-center justify-between">
-          <div className="label">Plan d'action ajusté</div>
-          <button onClick={handleReset} className="text-xs text-text-faint hover:text-brand transition-colors">
-            Recommencer
-          </button>
-        </div>
-        <div className="space-y-2.5">
-          {result.map((action, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className="flex gap-3 p-3.5 rounded-xl border"
-              style={{ borderColor: action.color + '40', backgroundColor: action.color + '08' }}
-            >
-              <div className="w-1 rounded-full flex-shrink-0 mt-1" style={{ backgroundColor: action.color, minHeight: 16 }} />
-              <p className="text-sm text-text-primary leading-relaxed">{action.text}</p>
-            </motion.div>
-          ))}
-        </div>
-        <div className="pt-1 text-center">
-          <p className="text-[11px] text-text-faint italic">"Reste dans le processus. Les résultats suivent."</p>
-        </div>
-      </motion.div>
-    )
-  }
+  if (result) return (
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="label">Plan d'action ajusté</div>
+        <button onClick={() => setResult(null)} className="text-xs text-text-faint hover:text-brand transition-colors">Recommencer</button>
+      </div>
+      <div className="space-y-2.5">
+        {result.map((action, i) => (
+          <motion.div key={i} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }}
+            className="flex gap-3 p-3.5 rounded-xl border" style={{ borderColor: action.color + '40', backgroundColor: action.color + '08' }}>
+            <div className="w-1 rounded-full flex-shrink-0 mt-1" style={{ backgroundColor: action.color, minHeight: 16 }} />
+            <p className="text-sm text-text-primary leading-relaxed">{action.text}</p>
+          </motion.div>
+        ))}
+      </div>
+      <p className="text-[11px] text-text-faint italic text-center pt-1">"Reste dans le processus. Les résultats suivent."</p>
+    </motion.div>
+  )
 
   return (
     <div className="space-y-5">
       {QUESTIONS.map(q => (
         <div key={q.id}>
           <div className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2.5">{q.label}</div>
-
           {q.type === 'chips' && (
             <div className="flex flex-wrap gap-2">
               {q.options.map(opt => {
                 const active = answers[q.id] === opt
-                return (
-                  <button
-                    key={opt}
-                    onClick={() => setAnswer(q.id, active ? null : opt)}
-                    className={`px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${
-                      active ? 'bg-brand text-black border-brand' : 'border-border text-text-muted hover:border-text-faint hover:text-text-primary'
-                    }`}
-                  >
-                    {opt}
-                  </button>
-                )
+                return <button key={opt} onClick={() => set(q.id, active ? null : opt)}
+                  className={`px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${active ? 'bg-brand text-white border-brand' : 'border-border text-text-muted hover:border-text-faint hover:text-text-primary'}`}>{opt}</button>
               })}
             </div>
           )}
-
           {q.type === 'number' && (
             <div className="flex items-center gap-3">
-              <button
-                onClick={() => setAnswer(q.id, Math.max(q.min, (answers[q.id] || q.min) - 1))}
-                className="w-9 h-9 rounded-xl bg-surface-2 border border-border text-lg font-bold hover:border-brand/30 transition-colors"
-              >−</button>
-              <div className="text-2xl font-bold tabular-nums text-brand w-12 text-center">
-                {answers[q.id] || q.min}
-              </div>
-              <button
-                onClick={() => setAnswer(q.id, Math.min(q.max, (answers[q.id] || q.min) + 1))}
-                className="w-9 h-9 rounded-xl bg-surface-2 border border-border text-lg font-bold hover:border-brand/30 transition-colors"
-              >+</button>
+              <button onClick={() => set(q.id, Math.max(q.min, (answers[q.id] || q.min) - 1))} className="w-9 h-9 rounded-xl bg-surface-2 border border-border text-lg font-bold hover:border-brand/30 transition-colors">−</button>
+              <div className="text-2xl font-bold tabular-nums text-brand w-12 text-center">{answers[q.id] || q.min}</div>
+              <button onClick={() => set(q.id, Math.min(q.max, (answers[q.id] || q.min) + 1))} className="w-9 h-9 rounded-xl bg-surface-2 border border-border text-lg font-bold hover:border-brand/30 transition-colors">+</button>
             </div>
           )}
-
           {q.type === 'scale' && (
             <div className="space-y-2">
               <div className="flex gap-2">
                 {Array.from({ length: q.max - q.min + 1 }, (_, i) => i + q.min).map(v => {
                   const active = answers[q.id] === v
-                  return (
-                    <button
-                      key={v}
-                      onClick={() => setAnswer(q.id, v)}
-                      className={`flex-1 py-2.5 rounded-xl border text-sm font-bold transition-all ${
-                        active ? 'bg-brand text-black border-brand' : 'border-border text-text-muted hover:border-brand/30'
-                      }`}
-                    >
-                      {v}
-                    </button>
-                  )
+                  return <button key={v} onClick={() => set(q.id, v)}
+                    className={`flex-1 py-2.5 rounded-xl border text-sm font-bold transition-all ${active ? 'bg-brand text-white border-brand' : 'border-border text-text-muted hover:border-brand/30'}`}>{v}</button>
                 })}
               </div>
-              <div className="flex justify-between text-[10px] text-text-faint px-0.5">
-                <span>{q.labels[0]}</span>
-                <span>{q.labels[4]}</span>
-              </div>
+              <div className="flex justify-between text-[10px] text-text-faint px-0.5"><span>{q.labels[0]}</span><span>{q.labels[4]}</span></div>
             </div>
           )}
-
           {q.type === 'text' && (
-            <input
-              type="text"
-              value={answers[q.id] || ''}
-              onChange={e => setAnswer(q.id, e.target.value)}
-              placeholder={q.placeholder}
-              className="w-full bg-surface-2 border border-border rounded-xl px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-brand placeholder-text-faint"
-            />
+            <input type="text" value={answers[q.id] || ''} onChange={e => set(q.id, e.target.value)} placeholder={q.placeholder}
+              className="w-full bg-surface-2 border border-border rounded-xl px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-brand placeholder-text-faint" />
           )}
         </div>
       ))}
-
-      <button
-        onClick={handleSubmit}
-        className="w-full py-3.5 rounded-2xl font-bold text-black text-sm bg-brand hover:bg-brand/90 active:scale-98 transition-all"
-      >
+      <button onClick={handleSubmit} className="w-full py-3.5 rounded-2xl font-bold text-white text-sm bg-brand hover:bg-brand-dim active:scale-98 transition-all">
         Générer mon plan d'action
       </button>
     </div>
   )
 }
+
+// ─── Plan component ───────────────────────────────────────────────────────────
 
 export default function Plan() {
   const [activeTab, setActiveTab] = useState('macro')
@@ -562,11 +415,7 @@ export default function Plan() {
       {/* Adapter */}
       {activeTab === 'adapter' && (
         <motion.div key="adapter" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-          <div>
-            <div className="text-sm text-text-muted leading-relaxed">
-              Réponds en 30 secondes. Le plan s'ajuste à ta réalité de la semaine.
-            </div>
-          </div>
+          <p className="text-sm text-text-muted">Réponds en 30 secondes. Le plan s'ajuste à ta réalité.</p>
           <div className="glass rounded-2xl p-5">
             <PlanQuestionnaire />
           </div>
