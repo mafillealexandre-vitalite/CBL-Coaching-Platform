@@ -3,7 +3,105 @@ import { motion, AnimatePresence } from 'framer-motion'
 import plan from '../data/coaching-plan.json'
 import { estimateSessionDuration } from '../utils/sessionUtils'
 import SessionExport from '../components/ui/SessionExport'
+import { GarminExportButton } from '../components/ui/SessionExport'
 import SessionCompleteModal from '../components/ui/SessionCompleteModal'
+
+// ─── Lecteur audio coach ──────────────────────────────────────────────────────
+
+function CoachAudio({ sessionName }) {
+  const [url, setUrl] = useState(() => {
+    const saved = JSON.parse(localStorage.getItem('cbl_audio_urls') || '{}')
+    return saved[sessionName] || ''
+  })
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(url)
+  const [playing, setPlaying] = useState(false)
+  const audioRef = useRef(null)
+
+  // Sync quand la séance change
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem('cbl_audio_urls') || '{}')
+    const saved_url = saved[sessionName] || ''
+    setUrl(saved_url)
+    setDraft(saved_url)
+    setPlaying(false)
+  }, [sessionName])
+
+  const saveUrl = () => {
+    const saved = JSON.parse(localStorage.getItem('cbl_audio_urls') || '{}')
+    saved[sessionName] = draft.trim()
+    localStorage.setItem('cbl_audio_urls', JSON.stringify(saved))
+    setUrl(draft.trim())
+    setEditing(false)
+  }
+
+  const togglePlay = () => {
+    if (!audioRef.current) return
+    if (playing) {
+      audioRef.current.pause()
+    } else {
+      audioRef.current.play()
+    }
+    setPlaying(p => !p)
+  }
+
+  if (!url && !editing) {
+    return (
+      <button
+        onClick={() => setEditing(true)}
+        className="flex items-center gap-2 text-xs text-text-faint hover:text-brand transition-colors py-1"
+      >
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+        </svg>
+        Ajouter un audio coach
+      </button>
+    )
+  }
+
+  if (editing) {
+    return (
+      <div className="flex gap-2 items-center">
+        <input
+          type="url"
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          placeholder="URL audio (mp3, m4a...)"
+          autoFocus
+          className="flex-1 bg-surface-2 border border-border rounded-lg px-3 py-1.5 text-xs text-text-primary focus:outline-none focus:border-brand"
+        />
+        <button onClick={saveUrl} className="text-xs font-semibold text-brand px-2 py-1.5 rounded-lg hover:bg-brand/10 transition-colors">OK</button>
+        <button onClick={() => { setEditing(false); setDraft(url) }} className="text-xs text-text-faint px-2 py-1.5 rounded-lg hover:bg-surface-2">✕</button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex items-center gap-3 p-3 rounded-xl bg-surface-2 border border-border">
+      {url && <audio ref={audioRef} src={url} onEnded={() => setPlaying(false)} preload="none" />}
+      <button
+        onClick={togglePlay}
+        className="w-8 h-8 rounded-full bg-brand/15 border border-brand/30 flex items-center justify-center text-brand hover:bg-brand/25 transition-colors flex-shrink-0"
+      >
+        {playing ? (
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+        ) : (
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        )}
+      </button>
+      <div className="flex-1 min-w-0">
+        <div className="text-xs font-semibold text-text-primary">Audio coach</div>
+        <div className="text-[10px] text-text-faint truncate">{url}</div>
+      </div>
+      <button onClick={() => setEditing(true)} className="text-text-faint hover:text-brand transition-colors flex-shrink-0">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+      </button>
+    </div>
+  )
+}
 
 function formatTime(seconds) {
   const m = Math.floor(seconds / 60)
@@ -293,6 +391,11 @@ export default function Session() {
         </div>
       )}
 
+      {/* Audio coach */}
+      {session && (
+        <CoachAudio sessionName={session.name} />
+      )}
+
       {/* Session selector */}
       <AnimatePresence>
         {showSelector && (
@@ -387,11 +490,19 @@ export default function Session() {
             onClick={() => setShowValidate(true)}
             className="flex-1 py-2.5 rounded-xl bg-surface-2 border border-border text-sm font-medium text-text-muted hover:text-text-primary hover:border-brand/20 transition-all"
           >
-            J'ai fait cette séance
+            C'est fait ✓
           </button>
         )}
         {session && <SessionExport session={session} week={week} />}
       </div>
+
+      {/* Export Garmin direct */}
+      {session && (
+        <div className="glass rounded-xl p-4">
+          <div className="label mb-3">Envoyer sur Garmin</div>
+          <GarminExportButton session={session} />
+        </div>
+      )}
 
       {/* Reset session */}
       {totalCompleted > 0 && (
@@ -402,6 +513,13 @@ export default function Session() {
           Réinitialiser
         </button>
       )}
+
+      {/* Citation */}
+      <div className="pt-2 pb-4 text-center">
+        <p className="text-[11px] text-text-faint italic">
+          "La fatigue est temporaire. L'abandon est permanent."
+        </p>
+      </div>
     </div>
   )
 }

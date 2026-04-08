@@ -10,22 +10,42 @@ import { WeeklyRecap, MonthlyRecap } from '../components/ui/WeeklyRecap'
 import { estimateSessionDuration, getSessionLog, getPlanWeek } from '../utils/sessionUtils'
 
 const DAYS = [
-  { id: 1, short: 'Lun', label: 'Lundi' },
-  { id: 2, short: 'Mar', label: 'Mardi' },
-  { id: 3, short: 'Mer', label: 'Mercredi' },
-  { id: 4, short: 'Jeu', label: 'Jeudi' },
-  { id: 5, short: 'Ven', label: 'Vendredi' },
-  { id: 6, short: 'Sam', label: 'Samedi' },
-  { id: 0, short: 'Dim', label: 'Dimanche' },
+  { id: 1, short: 'Lun' },
+  { id: 2, short: 'Mar' },
+  { id: 3, short: 'Mer' },
+  { id: 4, short: 'Jeu' },
+  { id: 5, short: 'Ven' },
+  { id: 6, short: 'Sam' },
+  { id: 0, short: 'Dim' },
 ]
 
 const SESSION_TYPES = {
-  force:      { label: 'Force',       color: '#00D4FF', bg: 'bg-brand/10 border-brand/20 text-brand' },
-  lactate:    { label: 'Lactique',    color: '#FF3D3D', bg: 'bg-danger/10 border-danger/20 text-danger' },
-  specificity:{ label: 'Spécificité', color: '#FF9500', bg: 'bg-warn/10 border-warn/20 text-warn' },
-  simulation: { label: 'Simulation',  color: '#FF3D3D', bg: 'bg-danger/10 border-danger/20 text-danger' },
-  recovery:   { label: 'Récup',       color: '#00D47A', bg: 'bg-success/10 border-success/20 text-success' },
-  rest:       { label: 'Repos',       color: '#444',    bg: 'bg-surface-3 border-border text-text-faint' },
+  force:       { label: 'Force',       color: '#00D4FF', bg: 'bg-brand/10 border-brand/20 text-brand' },
+  lactate:     { label: 'Lactique',    color: '#FF3D3D', bg: 'bg-danger/10 border-danger/20 text-danger' },
+  specificity: { label: 'Spécificité', color: '#FF9500', bg: 'bg-warn/10 border-warn/20 text-warn' },
+  simulation:  { label: 'Simulation',  color: '#FF3D3D', bg: 'bg-danger/10 border-danger/20 text-danger' },
+  recovery:    { label: 'Récup',       color: '#00D47A', bg: 'bg-success/10 border-success/20 text-success' },
+  rest:        { label: 'Repos',       color: '#444',    bg: 'bg-surface-3 border-border text-text-faint' },
+}
+
+// Citations — rotation par semaine (sobre, forte, courte)
+const CITATIONS = [
+  "La régularité bat l'intensité, toujours.",
+  "Tu ne t'entraînes pas pour hier. Tu t'entraînes pour dans 90 jours.",
+  "La discipline, c'est choisir ce qu'on veut le plus sur ce qu'on veut maintenant.",
+  "Chaque répétition compte. Même celle dont tu n'avais pas envie.",
+  "La fatigue est temporaire. L'abandon est permanent.",
+  "Ce que tu fais aujourd'hui décide de ce que tu peux faire demain.",
+  "Pas d'élan sans constance.",
+  "Le progrès n'est pas visible chaque jour. Il est là quand même.",
+  "Un athlète se construit dans les séances ordinaires.",
+  "Reste dans le processus. Les résultats suivent.",
+  "La douleur d'aujourd'hui, la performance de demain.",
+  "Ce n'est pas la motivation qui te fera progresser. C'est l'habitude.",
+]
+
+function getWeekCitation(week) {
+  return CITATIONS[(week - 1) % CITATIONS.length]
 }
 
 function getWeekNumber(date) {
@@ -56,18 +76,45 @@ function assignSessionsToDays(availability, template) {
   return map
 }
 
-// ─── "J'ai fait ma séance" validation check ───────────────────────────────────
+// ─── Day strip ────────────────────────────────────────────────────────────────
 
-function useSessionValidatedToday() {
-  const [validated, setValidated] = useState(null) // null = loading
-  const refresh = () => {
-    const log = getSessionLog()
-    const today = new Date().toDateString()
-    const todayEntry = log.filter(s => new Date(s.date).toDateString() === today && s.completed)
-    setValidated(todayEntry.length > 0 ? todayEntry[todayEntry.length - 1] : null)
+function DayStrip({ availability, sessionMap }) {
+  const today = new Date().getDay()
+  const log = getSessionLog()
+  const now = new Date()
+
+  const isDoneToday = (dayId) => {
+    if (dayId !== today) return false
+    const todayStr = now.toDateString()
+    return log.some(s => new Date(s.date).toDateString() === todayStr && s.completed)
   }
-  useEffect(refresh, [])
-  return [validated, refresh]
+
+  return (
+    <div className="flex gap-1 mt-3">
+      {DAYS.map(day => {
+        const isToday = day.id === today
+        const hasSession = (sessionMap[day.id] || []).length > 0 && availability.includes(day.id)
+        const done = isDoneToday(day.id)
+
+        return (
+          <div
+            key={day.id}
+            className={`flex-1 flex flex-col items-center gap-1 py-1.5 rounded-lg text-[10px] font-semibold transition-all ${
+              isToday ? 'bg-brand/15 text-brand' : 'text-text-faint'
+            }`}
+          >
+            <span>{day.short}</span>
+            <div className={`w-1.5 h-1.5 rounded-full ${
+              done ? 'bg-success' :
+              hasSession && isToday ? 'bg-brand' :
+              hasSession ? 'bg-surface-3' :
+              'bg-transparent'
+            }`} />
+          </div>
+        )
+      })}
+    </div>
+  )
 }
 
 // ─── Availability + Week plan ─────────────────────────────────────────────────
@@ -83,7 +130,7 @@ function AvailabilityPicker({ availability, onChange }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <div className="text-xs text-text-muted">Coche les jours où tu peux t'entraîner</div>
+        <div className="text-xs text-text-muted">Tes jours disponibles</div>
         <div className="text-sm font-mono text-brand">{availability.length}j / sem</div>
       </div>
       <div className="flex gap-1.5 flex-wrap">
@@ -107,14 +154,17 @@ function AvailabilityPicker({ availability, onChange }) {
   )
 }
 
-function WeekPlan({ availability, sessionMap }) {
+function WeekPlan({ availability, sessionMap, showNextWeek }) {
   const today = new Date().getDay()
   return (
     <div className="space-y-1.5 mt-4">
+      {showNextWeek && (
+        <div className="text-xs text-brand font-semibold mb-2 px-1">Semaine prochaine</div>
+      )}
       {DAYS.map(day => {
         const sessions = sessionMap[day.id] || []
         const isAvailable = availability.includes(day.id)
-        const isToday = day.id === today
+        const isToday = !showNextWeek && day.id === today
 
         return (
           <div key={day.id} className={`flex items-center gap-3 p-2.5 rounded-xl border transition-all ${
@@ -133,16 +183,14 @@ function WeekPlan({ availability, sessionMap }) {
                       <Link to="/session" className={`tag px-2 py-0.5 text-xs font-medium rounded-lg border ${st.bg}`}>
                         {s.name}
                       </Link>
-                      {est && (
-                        <span className="text-[10px] text-text-faint">⏱ ~{est}min</span>
-                      )}
+                      {est && <span className="text-[10px] text-text-faint">~{est}min</span>}
                     </div>
                   )
                 })
               ) : isAvailable ? (
                 <span className="text-xs text-text-faint">Repos</span>
               ) : (
-                <span className="text-xs text-text-faint italic">Indisponible</span>
+                <span className="text-xs text-text-faint">—</span>
               )}
             </div>
             <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isAvailable ? 'bg-success' : 'bg-surface-3'}`} />
@@ -153,19 +201,18 @@ function WeekPlan({ availability, sessionMap }) {
   )
 }
 
-// ─── KPIs ─────────────────────────────────────────────────────────────────────
+// ─── Mes chiffres (ex KPIs) ──────────────────────────────────────────────────
 
 function useKPIs(refreshKey) {
   const [kpis, setKpis] = useState(null)
   useEffect(() => {
     const sessions = getSessionLog()
-    const coachLog = JSON.parse(localStorage.getItem('cbl_coach_log') || '[]')
     const diagnostic = JSON.parse(localStorage.getItem('cbl_diagnostic') || 'null')
     const now = new Date()
 
     const last28Sessions = sessions.filter(s => (now - new Date(s.date)) < 28 * 86400 * 1000)
     const done28 = last28Sessions.filter(s => s.completed).length
-    const regularite = last28Sessions.length > 0 ? Math.round((done28 / last28Sessions.length) * 100) : null
+    const constance = last28Sessions.length > 0 ? Math.round((done28 / last28Sessions.length) * 100) : null
 
     const startOfWeek = new Date(now)
     startOfWeek.setDate(now.getDate() - now.getDay())
@@ -173,21 +220,21 @@ function useKPIs(refreshKey) {
     const thisWeekDone = sessions.filter(s => new Date(s.date) >= startOfWeek && s.completed).length
 
     const last7 = sessions.filter(s => (now - new Date(s.date)) < 7 * 86400 * 1000 && s.rpe)
-    const rpeAvg = last7.length > 0
+    const chargeRessentie = last7.length > 0
       ? (last7.reduce((sum, s) => sum + (s.rpe || 7), 0) / last7.length).toFixed(1)
       : null
 
-    let streak = 0
+    let serie = 0
     const completedDates = [...new Set(sessions.filter(s => s.completed).map(s => new Date(s.date).toDateString()))]
     const sorted = completedDates.sort((a, b) => new Date(b) - new Date(a))
     let prev = new Date(now); prev.setHours(0, 0, 0, 0)
     for (const d of sorted) {
       const diff = Math.round((prev - new Date(d)) / 86400000)
-      if (diff <= 1) { streak++; prev = new Date(d) } else break
+      if (diff <= 1) { serie++; prev = new Date(d) } else break
     }
 
     setKpis({
-      regularite, thisWeekDone, rpeAvg, streak,
+      constance, thisWeekDone, chargeRessentie, serie,
       diagnosticScore: diagnostic?.profile?.overall ?? null,
       hasDiagnostic: !!diagnostic,
     })
@@ -195,35 +242,37 @@ function useKPIs(refreshKey) {
   return kpis
 }
 
-function KPIGrid({ kpis, onStory, currentWeek, currentMonthIndex }) {
+function MesChiffres({ kpis, onStory, currentWeek, currentMonthIndex }) {
   const [showWeekRecap, setShowWeekRecap] = useState(false)
   const [showMonthRecap, setShowMonthRecap] = useState(false)
   if (!kpis) return null
 
   const items = [
     {
-      label: 'Régularité 28j',
-      value: kpis.regularite != null ? `${kpis.regularite}%` : '—',
-      sub: kpis.regularite != null ? (kpis.regularite >= 75 ? 'En bonne voie' : 'À améliorer') : 'Pas de données',
-      color: kpis.regularite == null ? '#666' : kpis.regularite >= 75 ? '#00D47A' : '#FF9500',
+      label: 'Constance',
+      value: kpis.constance != null ? `${kpis.constance}%` : '—',
+      sub: kpis.constance != null ? (kpis.constance >= 75 ? 'En bonne voie' : 'À améliorer') : '28 derniers jours',
+      color: kpis.constance == null ? '#666' : kpis.constance >= 75 ? '#00D47A' : '#FF9500',
     },
     {
-      label: 'Séances cette semaine',
+      label: 'Cette semaine',
       value: `${kpis.thisWeekDone}`,
-      sub: kpis.thisWeekDone === 0 ? 'Aucune encore' : `${kpis.thisWeekDone} faite${kpis.thisWeekDone > 1 ? 's' : ''}`,
+      sub: kpis.thisWeekDone === 0 ? 'Aucune encore' : `${kpis.thisWeekDone} séance${kpis.thisWeekDone > 1 ? 's' : ''}`,
       color: kpis.thisWeekDone > 0 ? '#00D4FF' : '#666',
     },
     {
-      label: 'RPE moyen 7j',
-      value: kpis.rpeAvg ?? '—',
-      sub: kpis.rpeAvg != null ? (kpis.rpeAvg > 8.5 ? '⚠ Charge élevée' : kpis.rpeAvg < 5 ? 'Sous-charge' : 'Zone optimale') : 'Valide des séances',
-      color: kpis.rpeAvg == null ? '#666' : kpis.rpeAvg > 8.5 ? '#FF3D3D' : kpis.rpeAvg < 5 ? '#FF9500' : '#00D47A',
+      label: 'Charge ressentie',
+      value: kpis.chargeRessentie ?? '—',
+      sub: kpis.chargeRessentie != null
+        ? (kpis.chargeRessentie > 8.5 ? '⚠ Haute' : kpis.chargeRessentie < 5 ? 'Légère' : 'Zone optimale')
+        : '7 derniers jours',
+      color: kpis.chargeRessentie == null ? '#666' : kpis.chargeRessentie > 8.5 ? '#FF3D3D' : kpis.chargeRessentie < 5 ? '#FF9500' : '#00D47A',
     },
     {
-      label: 'Streak',
-      value: `${kpis.streak}j`,
-      sub: kpis.streak === 0 ? 'Lance une séance' : kpis.streak >= 5 ? 'En feu 🔥' : 'Continue !',
-      color: kpis.streak >= 3 ? '#FF9500' : kpis.streak > 0 ? '#00D4FF' : '#666',
+      label: 'Série',
+      value: `${kpis.serie}j`,
+      sub: kpis.serie === 0 ? 'Lance une séance' : kpis.serie >= 7 ? `${kpis.serie}j sans briser la chaîne.` : 'Continue !',
+      color: kpis.serie >= 3 ? '#FF9500' : kpis.serie > 0 ? '#00D4FF' : '#666',
     },
   ]
 
@@ -239,30 +288,23 @@ function KPIGrid({ kpis, onStory, currentWeek, currentMonthIndex }) {
         ))}
       </div>
 
-      {/* Recap buttons */}
       <div className="flex gap-2">
         <button
           onClick={() => setShowWeekRecap(s => !s)}
           className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl bg-surface-2 border border-border text-xs font-medium text-text-muted hover:text-text-primary hover:border-brand/20 transition-all"
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
-          </svg>
-          Récap semaine {currentWeek}
+          Semaine {currentWeek}
         </button>
         <button
           onClick={() => setShowMonthRecap(s => !s)}
           className="flex-1 flex items-center justify-center gap-2 py-2 rounded-xl bg-surface-2 border border-border text-xs font-medium text-text-muted hover:text-text-primary hover:border-brand/20 transition-all"
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <path d="M2 20h20M2 14h20M2 8h20M2 2h20"/>
-          </svg>
-          Récap mois {currentMonthIndex + 1}
+          Mois {currentMonthIndex + 1}
         </button>
         <button
           onClick={onStory}
           className="px-3 py-2 rounded-xl bg-surface-2 border border-border text-text-faint hover:text-brand hover:border-brand/20 transition-all"
-          title="Story 9:16"
+          title="Story"
         >
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
@@ -283,13 +325,12 @@ function KPIGrid({ kpis, onStory, currentWeek, currentMonthIndex }) {
         )}
       </AnimatePresence>
 
-      {/* Diagnostic link */}
       {!kpis.hasDiagnostic ? (
         <Link to="/diagnostic" className="flex items-center gap-3 p-3.5 rounded-xl bg-brand/5 border border-brand/20 hover:bg-brand/10 transition-colors">
           <span className="text-brand text-base">⚡</span>
           <div>
             <div className="text-sm font-semibold text-text-primary">Faire le test diagnostique</div>
-            <div className="text-xs text-text-muted">Profil CBL sur 4 axes — ~45 min</div>
+            <div className="text-xs text-text-muted">Profil CBL sur 4 axes</div>
           </div>
           <svg className="ml-auto text-text-faint" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
         </Link>
@@ -306,7 +347,7 @@ function KPIGrid({ kpis, onStory, currentWeek, currentMonthIndex }) {
   )
 }
 
-// ─── Stat badge ───────────────────────────────────────────────────────────────
+// ─── Mes objectifs (ex Ma trajectoire) ───────────────────────────────────────
 
 function StatBadge({ label, current, target, unit = '' }) {
   const pct = Math.min(100, Math.round((current / target) * 100))
@@ -323,12 +364,12 @@ function StatBadge({ label, current, target, unit = '' }) {
           className="h-full bg-brand rounded-full"
         />
       </div>
-      <div className="text-[10px] text-text-muted mt-1">{pct}% de l'objectif</div>
+      <div className="text-[10px] text-text-muted mt-1">{pct}%</div>
     </div>
   )
 }
 
-// ─── Competition countdown ────────────────────────────────────────────────────
+// ─── Compétition countdown ────────────────────────────────────────────────────
 
 function CompetitionBlock() {
   const compDate = new Date('2026-09-01')
@@ -347,10 +388,24 @@ function CompetitionBlock() {
         <div className="h-full bg-brand rounded-full transition-all" style={{ width: `${pct}%` }} />
       </div>
       <Link to="/profile" className="text-xs text-text-faint hover:text-brand transition-colors">
-        Voir le profil compétition →
+        Voir le profil →
       </Link>
     </div>
   )
+}
+
+// ─── Session validated today ──────────────────────────────────────────────────
+
+function useSessionValidatedToday() {
+  const [validated, setValidated] = useState(null)
+  const refresh = () => {
+    const log = getSessionLog()
+    const today = new Date().toDateString()
+    const todayEntry = log.filter(s => new Date(s.date).toDateString() === today && s.completed)
+    setValidated(todayEntry.length > 0 ? todayEntry[todayEntry.length - 1] : null)
+  }
+  useEffect(refresh, [])
+  return [validated, refresh]
 }
 
 // ─── Main dashboard ───────────────────────────────────────────────────────────
@@ -366,13 +421,23 @@ export default function Dashboard() {
   const [sessionModalOpen, setSessionModalOpen] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
   const [validatedToday, refreshValidated] = useSessionValidatedToday()
+  const [showNextWeek, setShowNextWeek] = useState(false)
 
   const kpis = useKPIs(refreshKey)
 
   const storageKey = 'cbl_availability'
+  const nextWeekKey = 'cbl_availability_next'
+
   const [availability, setAvailability] = useState(() => {
     try {
       const saved = localStorage.getItem(storageKey)
+      return saved ? JSON.parse(saved) : athlete.defaultWeeklyAvailability
+    } catch { return athlete.defaultWeeklyAvailability }
+  })
+
+  const [nextAvailability, setNextAvailability] = useState(() => {
+    try {
+      const saved = localStorage.getItem(nextWeekKey)
       return saved ? JSON.parse(saved) : athlete.defaultWeeklyAvailability
     } catch { return athlete.defaultWeeklyAvailability }
   })
@@ -382,9 +447,17 @@ export default function Dashboard() {
     localStorage.setItem(storageKey, JSON.stringify(newAvail))
   }
 
-  const sessionMap = assignSessionsToDays(availability, template)
-  const todaySessions = sessionMap[today.getDay()] || []
+  const handleNextAvailabilityChange = (newAvail) => {
+    setNextAvailability(newAvail)
+    localStorage.setItem(nextWeekKey, JSON.stringify(newAvail))
+  }
+
+  const activeAvail = showNextWeek ? nextAvailability : availability
+  const todaySessionMap = assignSessionsToDays(availability, template)
+  const activeSessionMap = assignSessionsToDays(activeAvail, template)
+  const todaySessions = todaySessionMap[today.getDay()] || []
   const todaySession = todaySessions[0] || null
+
   const maxes = athlete.maxes
   const targets = athlete.targets3months
 
@@ -393,14 +466,15 @@ export default function Dashboard() {
     refreshValidated()
   }
 
-  // Plan week accordion icon
+  const citation = getWeekCitation(currentWeek)
+
   const planIcon = <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-  const kpiIcon = <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+  const chiffresIcon = <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
   const trophyIcon = <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
   const targetIcon = <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6 space-y-4 animate-fade-in">
+    <div className="max-w-4xl mx-auto px-4 py-5 space-y-4 animate-fade-in">
       <StoryCard isOpen={storyOpen} onClose={() => setStoryOpen(false)} />
       <SessionCompleteModal
         isOpen={sessionModalOpen}
@@ -409,57 +483,24 @@ export default function Dashboard() {
         onSaved={handleSessionSaved}
       />
 
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="label mb-1">Semaine {currentWeek} / 12</div>
-          <h1 className="text-2xl font-bold tracking-tight">{phase ? phase.name : 'Plan CBL'}</h1>
-          {phase && <p className="text-sm text-text-muted mt-1 max-w-md">{phase.objective}</p>}
+      {/* ── Header condensé — 1 ligne ── */}
+      <div className="flex items-center justify-between">
+        <div className="text-sm font-semibold text-text-muted">
+          Sem.&nbsp;<span className="text-text-primary font-bold">{currentWeek}</span>
+          {phase && <span className="text-text-faint"> · {phase.name.split('—')[0].trim()}</span>}
         </div>
-        <div className="flex flex-col items-end gap-1">
-          {phase && (
-            <div className="text-xs font-mono px-2.5 py-1 rounded-lg border" style={{ color: phase.color, borderColor: phase.color + '40', backgroundColor: phase.color + '10' }}>
-              {phase.focus.join(' · ')}
-            </div>
-          )}
-          <Link to="/plan" className="text-xs text-text-muted hover:text-brand mt-1">Voir le plan →</Link>
-        </div>
+        <Link to="/plan" className="text-xs text-text-faint hover:text-brand transition-colors">
+          Plan complet →
+        </Link>
       </div>
 
-      {/* Phase progress bar */}
-      {phase && (
-        <div className="glass rounded-xl p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-text-muted">Progression macro</span>
-            <span className="text-xs font-mono text-text-muted">{phase.weeks.indexOf(currentWeek) + 1} / {phase.weeks.length} sem.</span>
-          </div>
-          <div className="flex gap-1">
-            {plan.macroPhases.map(p => (
-              <div key={p.id} className="flex-1 h-1.5 rounded-full bg-surface-3 overflow-hidden">
-                <div className="h-full rounded-full transition-all duration-500" style={{
-                  backgroundColor: p.color,
-                  width: p.id === phase.id
-                    ? `${((phase.weeks.indexOf(currentWeek) + 1) / phase.weeks.length) * 100}%`
-                    : p.weeks[p.weeks.length - 1] < currentWeek ? '100%' : '0%'
-                }} />
-              </div>
-            ))}
-          </div>
-          <div className="flex justify-between mt-1.5">
-            {plan.macroPhases.map(p => (
-              <span key={p.id} className="text-[10px]" style={{ color: p.color + 'AA' }}>{p.name.split('—')[0].trim()}</span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Today's session CTA + "J'ai fait ma séance" */}
-      {todaySession && (
+      {/* ── Séance du jour — CTA ── */}
+      {todaySession ? (
         <div className="glass rounded-2xl p-5 border border-brand/20 bg-brand/5">
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3">
             <div className="flex-1 min-w-0">
-              <div className="label mb-0.5" style={{ color: '#00D4FF' }}>Séance du jour</div>
-              <div className="text-lg font-bold truncate">{todaySession.name}</div>
+              <div className="text-[11px] font-semibold text-brand uppercase tracking-wider mb-1">Séance du jour</div>
+              <div className="text-xl font-bold leading-tight truncate">{todaySession.name}</div>
               <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                 {(() => {
                   const st = SESSION_TYPES[todaySession.type] || SESSION_TYPES.rest
@@ -467,72 +508,91 @@ export default function Dashboard() {
                   return (
                     <>
                       <span className={`tag text-xs px-2 py-0.5 rounded border ${st.bg}`}>{st.label}</span>
-                      {est && <span className="text-xs text-text-faint">⏱ ~{est} min</span>}
+                      {est && <span className="text-xs text-text-faint">~{est} min</span>}
                     </>
                   )
                 })()}
               </div>
-              {todaySession.intention && (
-                <p className="text-xs text-text-muted italic mt-2 leading-relaxed line-clamp-2">
-                  "{todaySession.intention}"
-                </p>
-              )}
             </div>
-            <Link to="/session" className="btn-primary flex items-center gap-2 flex-shrink-0">
+            <Link to="/session" className="btn-primary flex items-center gap-2 flex-shrink-0 mt-1">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              Go
+              Commencer
             </Link>
           </div>
 
-          {/* "J'ai fait ma séance" button */}
+          {/* Strip jours */}
+          <DayStrip availability={availability} sessionMap={todaySessionMap} />
+
+          {/* Validation */}
           <div className="mt-4 pt-4 border-t border-border/50">
             {validatedToday ? (
               <div className="flex items-center gap-2 text-sm text-success">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
                 <span className="font-semibold">Séance validée</span>
-                <span className="text-text-faint">·  {validatedToday.duration}min · RPE {validatedToday.rpe}</span>
+                <span className="text-text-faint">· {validatedToday.duration}min · RPE {validatedToday.rpe}</span>
               </div>
             ) : (
               <button
                 onClick={() => setSessionModalOpen(true)}
                 className="w-full py-3 rounded-xl font-bold text-sm bg-brand text-black hover:bg-brand/90 active:scale-98 transition-all"
               >
-                ✓ J'ai fait ma séance
+                C'est fait ✓
+              </button>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="glass rounded-2xl p-4">
+          <DayStrip availability={availability} sessionMap={todaySessionMap} />
+          <div className="mt-4 flex items-center gap-3">
+            <div className="flex-1">
+              <div className="text-sm text-text-muted">Pas de séance aujourd'hui.</div>
+              {validatedToday ? (
+                <div className="text-xs text-success mt-0.5">✓ {validatedToday.duration}min enregistrées</div>
+              ) : (
+                <div className="text-xs text-text-faint mt-0.5">Tu peux quand même enregistrer une séance.</div>
+              )}
+            </div>
+            {!validatedToday && (
+              <button
+                onClick={() => setSessionModalOpen(true)}
+                className="px-3 py-2 rounded-xl text-xs font-semibold bg-surface-2 border border-border hover:border-brand/30 hover:text-brand text-text-muted transition-all"
+              >
+                C'est fait
               </button>
             )}
           </div>
         </div>
       )}
 
-      {/* No session today but button still accessible */}
-      {!todaySession && (
-        <div className="glass rounded-2xl p-4 flex items-center gap-3">
-          <div className="flex-1">
-            <div className="text-sm font-medium text-text-muted">Pas de séance programmée aujourd'hui</div>
-            <div className="text-xs text-text-faint mt-0.5">Tu peux quand même valider une séance faite.</div>
-          </div>
-          {validatedToday ? (
-            <div className="text-xs text-success font-semibold">✓ {validatedToday.duration}min</div>
-          ) : (
-            <button
-              onClick={() => setSessionModalOpen(true)}
-              className="px-3 py-2 rounded-xl text-xs font-semibold bg-surface-2 border border-border hover:border-brand/30 hover:text-brand text-text-muted transition-all"
-            >
-              Valider une séance
-            </button>
-          )}
+      {/* ── Ma semaine ── */}
+      <Accordion id="planSemaine" title="Ma semaine" icon={planIcon} badge={`${activeAvail.length}j`} defaultOpen={true}>
+        {/* Toggle semaine courante / suivante */}
+        <div className="flex gap-1 p-1 bg-surface-2 border border-border rounded-xl mb-4">
+          <button
+            onClick={() => setShowNextWeek(false)}
+            className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${!showNextWeek ? 'bg-brand text-black' : 'text-text-muted'}`}
+          >
+            Cette semaine
+          </button>
+          <button
+            onClick={() => setShowNextWeek(true)}
+            className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${showNextWeek ? 'bg-brand text-black' : 'text-text-muted'}`}
+          >
+            Semaine suivante
+          </button>
         </div>
-      )}
 
-      {/* ACCORDION: Plan de la semaine */}
-      <Accordion id="planSemaine" title="Plan de la semaine" icon={planIcon} badge={`${availability.length}j/sem`} defaultOpen={true}>
-        <AvailabilityPicker availability={availability} onChange={handleAvailabilityChange} />
-        <WeekPlan availability={availability} sessionMap={sessionMap} />
+        <AvailabilityPicker
+          availability={activeAvail}
+          onChange={showNextWeek ? handleNextAvailabilityChange : handleAvailabilityChange}
+        />
+        <WeekPlan availability={activeAvail} sessionMap={activeSessionMap} showNextWeek={showNextWeek} />
       </Accordion>
 
-      {/* ACCORDION: KPIs */}
-      <Accordion id="kpis" title="KPIs" icon={kpiIcon} defaultOpen={false}>
-        <KPIGrid
+      {/* ── Mes chiffres ── */}
+      <Accordion id="mesChiffres" title="Mes chiffres" icon={chiffresIcon} defaultOpen={false}>
+        <MesChiffres
           kpis={kpis}
           onStory={() => setStoryOpen(true)}
           currentWeek={currentWeek}
@@ -540,8 +600,8 @@ export default function Dashboard() {
         />
       </Accordion>
 
-      {/* ACCORDION: Ma trajectoire */}
-      <Accordion id="trajectoire" title="Ma trajectoire" icon={targetIcon} defaultOpen={false}>
+      {/* ── Mes objectifs ── */}
+      <Accordion id="mesObjectifs" title="Mes objectifs" icon={targetIcon} defaultOpen={false}>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <StatBadge label="Tractions" current={maxes.pullUp.value} target={targets.pullUp.value} unit=" reps" />
           <StatBadge label="Muscle-up" current={maxes.muscleUp.value} target={targets.muscleUp.value} unit=" reps" />
@@ -555,20 +615,20 @@ export default function Dashboard() {
         </div>
       </Accordion>
 
-      {/* ACCORDION: Prochaine compétition */}
+      {/* ── Prochaine compétition ── */}
       <Accordion id="competition" title="Prochaine compétition" icon={trophyIcon} defaultOpen={false}>
         <CompetitionBlock />
       </Accordion>
 
-      {/* Quick access — always visible */}
+      {/* ── Accès rapide ── */}
       <div>
         <div className="label mb-3">Accès rapide</div>
         <div className="grid grid-cols-2 gap-2">
           {[
-            { to: '/circuits', label: 'Circuits CBL', sub: '11 circuits', icon: <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>, color: '#FF9500', bg: 'bg-warn/10 border-warn/20' },
-            { to: '/progression', label: 'Progression', sub: 'Calendrier + historique', icon: <><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>, color: '#00D47A', bg: 'bg-success/10 border-success/20' },
-            { to: '/diagnostic', label: 'Diagnostic', sub: 'Profil 4 axes', text: '⚡', color: '#00D4FF', bg: 'bg-brand/10 border-brand/20' },
-            { to: '/coach', label: 'Coach', sub: 'Débrief séance', icon: <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>, color: '#FF9500', bg: 'bg-warn/10 border-warn/20' },
+            { to: '/circuits',   label: 'Circuits CBL', sub: '11 circuits',          icon: <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>, color: '#FF9500', bg: 'bg-warn/10 border-warn/20' },
+            { to: '/progression',label: 'Progression',  sub: 'Calendrier + historique', icon: <><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>, color: '#00D47A', bg: 'bg-success/10 border-success/20' },
+            { to: '/diagnostic', label: 'Diagnostic',   sub: 'Profil 4 axes',        text: '⚡',   color: '#00D4FF', bg: 'bg-brand/10 border-brand/20' },
+            { to: '/coach',      label: 'Coach',        sub: 'Débrief séance',        icon: <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>, color: '#FF9500', bg: 'bg-warn/10 border-warn/20' },
           ].map(item => (
             <Link key={item.to} to={item.to} className="glass glass-hover rounded-xl p-3.5 flex items-center gap-3">
               <div className={`w-8 h-8 rounded-lg border flex items-center justify-center flex-shrink-0 ${item.bg}`}>
@@ -587,6 +647,13 @@ export default function Dashboard() {
             </Link>
           ))}
         </div>
+      </div>
+
+      {/* ── Citation ── */}
+      <div className="pt-2 pb-4 text-center">
+        <p className="text-[11px] text-text-faint italic leading-relaxed max-w-xs mx-auto">
+          "{citation}"
+        </p>
       </div>
     </div>
   )
