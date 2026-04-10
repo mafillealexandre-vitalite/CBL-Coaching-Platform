@@ -1850,13 +1850,43 @@ function AddAthleteModal({ onSave, onClose }) {
   }
 
   const inviteLink = created
-    ? `${window.location.origin}/login?id=${created.id}`
+    ? `${window.location.origin}/#/login?id=${created.id}`
     : ''
 
+  const inviteMessage = created ? `⚡ CBL COACH PRO
+
+Salut ${created.name.split(' ')[0]},
+
+Nicolas t'a créé ton espace d'entraînement personnel.
+
+🔗 Accès : ${inviteLink}
+🔑 PIN : ${pin}
+
+Clique le lien → entre ton code → tu es dans ton espace.
+
+À toi de jouer. 💪` : ''
+
+  const copyToClipboard = (text) => {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text)
+    }
+    // Fallback universel (HTTP, Safari iOS, WebView)
+    const ta = document.createElement('textarea')
+    ta.value = text
+    ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0'
+    document.body.appendChild(ta)
+    ta.focus()
+    ta.select()
+    try { document.execCommand('copy') } catch {}
+    document.body.removeChild(ta)
+    return Promise.resolve()
+  }
+
   const copyLink = () => {
-    navigator.clipboard?.writeText(inviteLink).catch(() => {})
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    copyToClipboard(inviteMessage).finally(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2500)
+    })
   }
 
   return (
@@ -1968,43 +1998,64 @@ function AddAthleteModal({ onSave, onClose }) {
           </>
         ) : (
           /* ── Écran invitation ── */
-          <div className="space-y-5 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-brand/10 border border-brand/20 flex items-center justify-center mx-auto">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="2" strokeLinecap="round">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.22 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.56a16 16 0 0 0 5.72 5.72l.94-.87a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.28 16z"/>
-              </svg>
-            </div>
-
-            <div>
-              <h3 className="font-bold text-text-primary text-lg">{created?.name} ajouté !</h3>
-              <p className="text-sm text-text-muted mt-1">Partage ce lien à ton athlète pour qu'il se connecte directement.</p>
-            </div>
-
-            {/* Lien */}
-            <div className="bg-surface-2 border border-border rounded-xl p-3 text-left space-y-2">
-              <div className="text-[10px] text-text-faint uppercase tracking-wider">Lien d'accès</div>
-              <div className="font-mono text-xs text-text-muted break-all">{inviteLink}</div>
-            </div>
-
-            {/* PIN */}
-            <div className="bg-brand/5 border border-brand/20 rounded-xl p-3 flex items-center justify-between">
-              <div className="text-left">
-                <div className="text-[10px] text-text-faint">Code PIN</div>
-                <div className="font-mono font-bold text-brand tracking-widest text-lg">{pin}</div>
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-brand/10 border border-brand/20 flex items-center justify-center flex-shrink-0">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="2" strokeLinecap="round">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.22 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.56a16 16 0 0 0 5.72 5.72l.94-.87a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.28 16z"/>
+                </svg>
               </div>
-              <div className="text-xs text-text-faint">À transmettre avec<br/>le lien</div>
+              <div>
+                <h3 className="font-bold text-text-primary">{created?.name} est prêt</h3>
+                <p className="text-xs text-text-muted">Copie le message → colle dans WhatsApp / SMS</p>
+              </div>
+            </div>
+
+            {/* Aperçu du message */}
+            <div className="relative bg-[#0F1923] border border-border rounded-2xl p-4 space-y-1">
+              <div className="text-[9px] text-text-faint uppercase tracking-wider mb-2">Aperçu du message</div>
+              {inviteMessage.split('\n').map((line, i) => (
+                <div key={i} className={`leading-relaxed ${
+                  line === '' ? 'h-2' :
+                  line.startsWith('⚡') ? 'text-brand font-bold text-sm' :
+                  line.startsWith('🔗') || line.startsWith('🔑') ? 'font-mono text-xs text-white/80' :
+                  line.startsWith('Salut') ? 'text-white/70 text-sm' :
+                  line.startsWith('Nicolas') ? 'text-white/50 text-xs' :
+                  line.startsWith('Clique') ? 'text-white/50 text-xs italic' :
+                  line.startsWith('À toi') ? 'text-white/80 text-sm font-semibold' :
+                  'text-white/40 text-xs'
+                }`}>
+                  {line || '\u00A0'}
+                </div>
+              ))}
             </div>
 
             <div className="flex flex-col gap-2">
-              <button
+              <motion.button
                 onClick={copyLink}
-                className="w-full btn-primary flex items-center justify-center gap-2"
+                whileTap={{ scale: 0.97 }}
+                className={`w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all ${
+                  copied
+                    ? 'bg-success/20 text-success border border-success/30'
+                    : 'bg-brand text-black hover:bg-brand/90'
+                }`}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                  <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                </svg>
-                {copied ? '✓ Lien copié !' : 'Copier le lien d\'invitation'}
-              </button>
+                {copied ? (
+                  <>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    Message copié — colle dans WhatsApp !
+                  </>
+                ) : (
+                  <>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                      <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                    </svg>
+                    Copier le message complet
+                  </>
+                )}
+              </motion.button>
               <button onClick={onClose} className="w-full btn-ghost text-sm">Fermer</button>
             </div>
           </div>
