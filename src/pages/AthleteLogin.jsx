@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { getAthletes, setCurrentAthleteId, setRole } from '../utils/coachStore'
+import { getAthletes, setCurrentAthleteId, setRole, getRole } from '../utils/coachStore'
 
 // ── Step 1 : saisie du code athlète ──────────────────────────────────────────
 function IdStep({ onFound }) {
@@ -88,6 +88,7 @@ function PinStep({ athlete, onBack }) {
 
   const submit = (code) => {
     if (code === athlete.pin) {
+      setRole('athlete')
       setCurrentAthleteId(athlete.id)
       navigate('/dashboard')
     } else {

@@ -21,6 +21,7 @@ export function setCurrentAthleteId(id) {
 }
 export function logoutAthlete() {
   localStorage.removeItem('cbl_current_athlete_id')
+  localStorage.setItem('cbl_role', 'athlete')
 }
 
 // ── Athletes ──────────────────────────────────────────────────────────────────
