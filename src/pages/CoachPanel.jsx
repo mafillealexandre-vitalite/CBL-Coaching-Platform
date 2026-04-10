@@ -1108,10 +1108,10 @@ const RPE_LABEL = (v) => v <= 2 ? 'Trop facile' : v <= 4 ? 'Facile' : v <= 6 ? '
 
 function RpeTab({ athleteId }) {
   const debriefs = (() => {
-    try { return JSON.parse(localStorage.getItem('cbl_debriefs') || '[]') } catch { return [] }
+    try { return JSON.parse(localStorage.getItem(`cbl_debriefs_${athleteId}`) || '[]') } catch { return [] }
   })().slice().reverse().slice(0, 20)
 
-  const exRpeList = getRpeExercises().slice().reverse().slice(0, 10)
+  const exRpeList = getRpeExercises(athleteId).slice().reverse().slice(0, 10)
 
   // Consecutive high/low RPE alert
   const recent = debriefs.slice(0, 4).map(d => d.rpe).filter(Boolean)
@@ -1507,6 +1507,73 @@ function AvailabilityNotifsPanel({ onClose }) {
 }
 
 // ── Athlete views ─────────────────────────────────────────────────────────────
+function copyText(text) {
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(text).catch(() => legacyCopy(text))
+  } else {
+    legacyCopy(text)
+  }
+}
+function legacyCopy(text) {
+  const ta = document.createElement('textarea')
+  ta.value = text
+  ta.setAttribute('readonly', '')
+  ta.style.cssText = 'position:absolute;left:-9999px;top:-9999px;font-size:16px'
+  document.body.appendChild(ta)
+  ta.select()
+  ta.setSelectionRange(0, 99999)
+  try { document.execCommand('copy') } catch {}
+  document.body.removeChild(ta)
+}
+
+function InviteCard({ athlete }) {
+  const [copied, setCopied] = useState(false)
+  const link = `${window.location.origin}/#/login?id=${athlete.id}`
+  const pin = athlete.pin || '—'
+  const msg = `⚡ CBL COACH PRO\n\nSalut ${athlete.name.split(' ')[0]},\n\nNicolas t'a créé ton espace d'entraînement personnel.\n\n🔗 Accès : ${link}\n🔑 PIN : ${pin}\n\nClique le lien → entre ton code → tu es dans ton espace.\n\nÀ toi de jouer. 💪`
+
+  const handle = () => {
+    copyText(msg)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2500)
+  }
+
+  return (
+    <div className="glass rounded-2xl p-4 border border-border space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="label">Accès athlète</div>
+        <motion.button
+          onClick={handle}
+          whileTap={{ scale: 0.95 }}
+          className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all ${
+            copied ? 'bg-success/15 text-success' : 'bg-brand/10 text-brand hover:bg-brand/20'
+          }`}
+        >
+          {copied ? (
+            <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>Copié !</>
+          ) : (
+            <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copier le message</>
+          )}
+        </motion.button>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <div className="bg-surface-2 rounded-xl p-3">
+          <div className="text-[10px] text-text-faint mb-1">Code athlète</div>
+          <div className="font-mono text-sm text-text-primary font-semibold">{athlete.id}</div>
+        </div>
+        <div className="bg-brand/5 border border-brand/15 rounded-xl p-3">
+          <div className="text-[10px] text-text-faint mb-1">PIN</div>
+          <div className="font-mono text-sm text-brand font-bold tracking-widest">{pin}</div>
+        </div>
+      </div>
+      <div className="bg-surface-2 rounded-xl px-3 py-2">
+        <div className="text-[10px] text-text-faint mb-1">Lien d'invitation</div>
+        <div className="font-mono text-[11px] text-text-muted break-all">{link}</div>
+      </div>
+    </div>
+  )
+}
+
 function ProfilTab({ athlete, onUpdate }) {
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState(() => ({
@@ -1536,6 +1603,8 @@ function ProfilTab({ athlete, onUpdate }) {
 
   return (
     <div className="space-y-5">
+      {/* Invite */}
+      <InviteCard athlete={athlete} />
       {/* PRs */}
       <div className="glass rounded-2xl p-4 space-y-3">
         <div className="flex items-center justify-between">
@@ -1866,27 +1935,10 @@ Clique le lien → entre ton code → tu es dans ton espace.
 
 À toi de jouer. 💪` : ''
 
-  const copyToClipboard = (text) => {
-    if (navigator.clipboard && window.isSecureContext) {
-      return navigator.clipboard.writeText(text)
-    }
-    // Fallback universel (HTTP, Safari iOS, WebView)
-    const ta = document.createElement('textarea')
-    ta.value = text
-    ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0'
-    document.body.appendChild(ta)
-    ta.focus()
-    ta.select()
-    try { document.execCommand('copy') } catch {}
-    document.body.removeChild(ta)
-    return Promise.resolve()
-  }
-
   const copyLink = () => {
-    copyToClipboard(inviteMessage).finally(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2500)
-    })
+    copyText(inviteMessage)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2500)
   }
 
   return (

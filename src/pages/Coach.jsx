@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { getCurrentAthleteId } from '../utils/coachStore'
 import { matchCoachRules, computePlanAdjustments } from '../utils/coachEngine'
 import { computeDeltas } from '../utils/diagnosticEngine'
 import plan from '../data/coaching-plan.json'
@@ -150,7 +151,7 @@ export default function Coach() {
   return (
     <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-5">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-text-primary">Coach Claude</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-text-primary">Coach IA</h1>
         <p className="text-text-muted text-sm mt-1">Ton coach personnel CBL. Décris ta séance, reçois un retour.</p>
       </div>
 
@@ -337,7 +338,8 @@ function AthleteDebriefs() {
   const [debriefs, setDebriefs] = useState([])
   const [expanded, setExpanded] = useState(null)
   useEffect(() => {
-    const d = JSON.parse(localStorage.getItem('cbl_debriefs') || '[]')
+    const id = getCurrentAthleteId() || 'alexandre'
+    const d = JSON.parse(localStorage.getItem(`cbl_debriefs_${id}`) || '[]')
     setDebriefs(d.slice().reverse())
   }, [])
   if (debriefs.length === 0) return (

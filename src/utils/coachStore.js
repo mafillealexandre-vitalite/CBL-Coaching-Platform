@@ -176,14 +176,16 @@ export function saveAvailabilityNotifs(notifs) {
   localStorage.setItem('cbl_availability_notifs', JSON.stringify(notifs))
 }
 
-// ── RPE per exercise ──────────────────────────────────────────────────────────
+// ── RPE per exercise (per athlete) ────────────────────────────────────────────
 // [{sessionName, date, exercises:[{name, rpe}]}]
-export function getRpeExercises() {
-  try { return JSON.parse(localStorage.getItem('cbl_rpe_exercises')) || [] }
+export function getRpeExercises(athleteId) {
+  const id = athleteId || getCurrentAthleteId() || 'alexandre'
+  try { return JSON.parse(localStorage.getItem(`cbl_rpe_exercises_${id}`)) || [] }
   catch { return [] }
 }
-export function saveRpeExercises(list) {
-  localStorage.setItem('cbl_rpe_exercises', JSON.stringify(list))
+export function saveRpeExercises(list, athleteId) {
+  const id = athleteId || getCurrentAthleteId() || 'alexandre'
+  localStorage.setItem(`cbl_rpe_exercises_${id}`, JSON.stringify(list))
 }
 
 // ── Session templates (coach reuse library) ───────────────────────────────────

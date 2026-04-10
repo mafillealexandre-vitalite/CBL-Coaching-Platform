@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { logSession, getPlanWeek, getSessionLog } from '../../utils/sessionUtils'
-import { saveRpeExercises, getRpeExercises } from '../../utils/coachStore'
+import { saveRpeExercises, getRpeExercises, getCurrentAthleteId } from '../../utils/coachStore'
 
 const SESSION_COLORS = {
   force: '#0EA5E9',
@@ -15,7 +15,9 @@ const SESSION_COLORS = {
 const RPE_LABELS = ['', 'Très léger', 'Léger', 'Modéré', 'Assez dur', 'Dur', 'Dur+', 'Très dur', 'Max−', 'Max', 'MAX ABS.']
 
 function saveDebrief({ sessionName, sessionType, rpe, duration, note, week }) {
-  const debriefs = JSON.parse(localStorage.getItem('cbl_debriefs') || '[]')
+  const athleteId = getCurrentAthleteId() || 'alexandre'
+  const key = `cbl_debriefs_${athleteId}`
+  const debriefs = JSON.parse(localStorage.getItem(key) || '[]')
   debriefs.push({
     id: Date.now().toString(),
     date: new Date().toISOString(),
@@ -26,7 +28,7 @@ function saveDebrief({ sessionName, sessionType, rpe, duration, note, week }) {
     note: note.trim(),
     week,
   })
-  localStorage.setItem('cbl_debriefs', JSON.stringify(debriefs))
+  localStorage.setItem(key, JSON.stringify(debriefs))
 }
 
 function getCurrentSerie() {
