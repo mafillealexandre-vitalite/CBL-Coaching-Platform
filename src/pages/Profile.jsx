@@ -44,22 +44,23 @@ function useProfileData() {
 // Keep backward compat alias
 const athlete = athleteStatic
 
-function ProfileAvatar() {
-  const [photo, setPhoto] = useState(() => localStorage.getItem('cbl_profile_photo') || null)
+function ProfileAvatar({ athleteId, initials }) {
+  const photoKey = `cbl_profile_photo_${athleteId || 'alexandre'}`
+  const [photo, setPhoto] = useState(() => localStorage.getItem(photoKey) || null)
   const inputRef = useRef(null)
   const handleFileChange = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
     if (file.size > 2 * 1024 * 1024) { alert('Photo trop lourde (max 2 Mo)'); return }
     const reader = new FileReader()
-    reader.onload = (ev) => { setPhoto(ev.target.result); localStorage.setItem('cbl_profile_photo', ev.target.result) }
+    reader.onload = (ev) => { setPhoto(ev.target.result); localStorage.setItem(photoKey, ev.target.result) }
     reader.readAsDataURL(file)
   }
-  const handleRemove = (e) => { e.stopPropagation(); setPhoto(null); localStorage.removeItem('cbl_profile_photo') }
+  const handleRemove = (e) => { e.stopPropagation(); setPhoto(null); localStorage.removeItem(photoKey) }
   return (
     <div className="relative flex-shrink-0">
       <button onClick={() => inputRef.current?.click()} className="w-16 h-16 rounded-2xl overflow-hidden flex items-center justify-center bg-brand text-white text-2xl font-bold hover:opacity-80 transition-opacity relative group" title="Changer la photo">
-        {photo ? <img src={photo} alt="Profil" className="w-full h-full object-cover" /> : <span>{athlete.name?.[0] || 'A'}</span>}
+        {photo ? <img src={photo} alt="Profil" className="w-full h-full object-cover" /> : <span>{initials || 'A'}</span>}
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
         </div>
@@ -167,18 +168,23 @@ const MAXES_DISPLAY = [
 
 export default function Profile() {
   const { athlete: currentAthlete, prs } = useProfileData()
+  const athleteId = getCurrentAthleteId() || 'alexandre'
+  const isAlexandre = athleteId === 'alexandre'
+  const initials = currentAthlete.name?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'A'
 
   const maxData = (key) => {
     if (prs?.[key]) return { value: prs[key].value, target: prs[key].target, unit: prs[key].unit, valueStr: prs[key].valueStr, targetStr: prs[key].targetStr }
     return { value: currentAthlete.maxes?.[key]?.value, target: currentAthlete.targets3months?.[key]?.value, unit: currentAthlete.maxes?.[key]?.unit }
   }
 
+  const hasMaxes = MAXES_DISPLAY.some(m => maxData(m.key).value)
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 space-y-6 animate-fade-in">
 
       {/* Hero */}
       <div className="glass rounded-2xl p-6 flex items-center gap-5">
-        <ProfileAvatar />
+        <ProfileAvatar athleteId={athleteId} initials={initials} />
         <div>
           <h1 className="text-xl font-bold">{currentAthlete.name}</h1>
           <div className="text-sm text-text-muted mt-0.5">{currentAthlete.goal}</div>
@@ -189,8 +195,8 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Countdown */}
-      <CompetitionProgress />
+      {/* Countdown — only if athlete has a competition date */}
+      {currentAthlete.competitionDate && <CompetitionProgress />}
 
       {/* Context */}
       <div className="glass rounded-2xl p-5 border-l-2 border-danger">
@@ -204,8 +210,8 @@ export default function Profile() {
         )}
       </div>
 
-      {/* Maxes + targets */}
-      <div>
+      {/* Maxes + targets — only if data exists */}
+      {hasMaxes && <div>
         <div className="flex items-center justify-between mb-3">
           <div className="label">Mes maxima → Objectifs 3 mois</div>
         </div>
@@ -227,10 +233,10 @@ export default function Profile() {
         <div className="text-xs text-text-muted mt-2 text-center">
           Le cercle représente ta progression vers l'objectif cible
         </div>
-      </div>
+      </div>}
 
       {/* Detailed maxes table */}
-      <div className="glass rounded-2xl overflow-hidden">
+      {hasMaxes && <div className="glass rounded-2xl overflow-hidden">
         <div className="px-5 py-3 border-b border-border">
           <div className="label">Détail des performances</div>
         </div>
@@ -267,10 +273,10 @@ export default function Profile() {
             )
           })}
         </div>
-      </div>
+      </div>}
 
-      {/* Plan summary */}
-      <div className="glass rounded-2xl p-5">
+      {/* Plan summary — only for alexandre (static plan) */}
+      {isAlexandre && <div className="glass rounded-2xl p-5">
         <div className="label mb-3">Résumé du plan</div>
         <div className="grid grid-cols-2 gap-3">
           {plan.macroPhases.map(phase => (
@@ -289,7 +295,7 @@ export default function Profile() {
             </div>
           ))}
         </div>
-      </div>
+      </div>}
     </div>
   )
 }

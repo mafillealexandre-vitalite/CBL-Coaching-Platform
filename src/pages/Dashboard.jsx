@@ -411,7 +411,8 @@ export default function Dashboard() {
   const [validatedToday, refreshValidated] = useSessionValidatedToday()
   const [showNextWeek, setShowNextWeek] = useState(false)
 
-  const nextWeekKey = 'cbl_availability_next'
+  const _aid = getCurrentAthleteId() || 'alexandre'
+  const nextWeekKey = `cbl_availability_next_${_aid}`
   const [nextAvailability, setNextAvailability] = useState(() => {
     try { const s = localStorage.getItem(nextWeekKey); return s ? JSON.parse(s) : athlete.defaultWeeklyAvailability } catch { return athlete.defaultWeeklyAvailability }
   })
@@ -419,7 +420,7 @@ export default function Dashboard() {
 
   const kpis = useKPIs(refreshKey)
 
-  const storageKey = 'cbl_availability'
+  const storageKey = `cbl_availability_${_aid}`
   const [availability, setAvailability] = useState(() => {
     try {
       const saved = localStorage.getItem(storageKey)
@@ -462,7 +463,7 @@ export default function Dashboard() {
     }
     const existing = getAvailabilityNotifs()
     saveAvailabilityNotifs([...existing, notif])
-    localStorage.setItem('cbl_dispos_sent_at', new Date().toISOString())
+    localStorage.setItem(`cbl_dispos_sent_at_${_aid}`, new Date().toISOString())
     setDisposSent(true)
     setTimeout(() => setDisposSent(false), 3000)
   }
@@ -619,7 +620,7 @@ export default function Dashboard() {
           )}
         </button>
         {(() => {
-          const sentAt = localStorage.getItem('cbl_dispos_sent_at')
+          const sentAt = localStorage.getItem(`cbl_dispos_sent_at_${getCurrentAthleteId() || 'alexandre'}`)
           if (!sentAt) return null
           const mins = Math.round((Date.now() - new Date(sentAt)) / 60000)
           const label = mins < 1 ? 'à l\'instant' : mins < 60 ? `il y a ${mins} min` : `il y a ${Math.floor(mins/60)}h`

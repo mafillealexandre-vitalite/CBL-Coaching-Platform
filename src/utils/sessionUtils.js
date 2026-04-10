@@ -4,6 +4,12 @@
  */
 
 import plan from '../data/coaching-plan.json'
+import { getCurrentAthleteId } from './coachStore'
+
+function sessionLogKey() {
+  const id = getCurrentAthleteId() || 'alexandre'
+  return `cbl_session_log_${id}`
+}
 
 // ─── Duration estimation ──────────────────────────────────────────────────────
 
@@ -86,12 +92,12 @@ export function aggregateVolume(sessions) {
 // ─── Session log helpers ──────────────────────────────────────────────────────
 
 export function getSessionLog() {
-  try { return JSON.parse(localStorage.getItem('cbl_session_log') || '[]') }
+  try { return JSON.parse(localStorage.getItem(sessionLogKey()) || '[]') }
   catch { return [] }
 }
 
 export function saveSessionLog(log) {
-  localStorage.setItem('cbl_session_log', JSON.stringify(log))
+  localStorage.setItem(sessionLogKey(), JSON.stringify(log))
 }
 
 /** Appends a completed session to the log */

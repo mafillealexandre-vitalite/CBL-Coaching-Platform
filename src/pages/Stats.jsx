@@ -5,6 +5,7 @@ import {
 } from 'recharts'
 import athlete from '../data/athlete.json'
 import plan from '../data/coaching-plan.json'
+import { getCurrentAthleteId } from '../utils/coachStore'
 
 const MOVES = [
   { key: 'pullUp', label: 'Tractions', color: '#0EA5E9', unit: 'reps' },
@@ -14,11 +15,13 @@ const MOVES = [
   { key: 'gobletSquat', label: 'Goblet @16kg', color: '#A78BFA', unit: 'reps' },
 ]
 
-const STORAGE_KEY = 'cbl_perfs'
+function perfsKey() {
+  return `cbl_perfs_${getCurrentAthleteId() || 'alexandre'}`
+}
 
 function loadPerfs() {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY)
+    const saved = localStorage.getItem(perfsKey())
     if (saved) return JSON.parse(saved)
   } catch {}
   return [{
@@ -29,7 +32,7 @@ function loadPerfs() {
 }
 
 function savePerfs(perfs) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(perfs))
+  localStorage.setItem(perfsKey(), JSON.stringify(perfs))
 }
 
 const CustomTooltip = ({ active, payload, label }) => {
