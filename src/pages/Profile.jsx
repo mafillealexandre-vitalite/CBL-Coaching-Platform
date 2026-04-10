@@ -8,40 +8,55 @@ import { getAthletes, getCurrentAthleteId } from '../utils/coachStore'
 function useProfileData() {
   const id = getCurrentAthleteId() || 'alexandre'
   const stored = getAthletes().find(a => a.id === id)
-  if (!stored) return { athlete: athleteStatic, prs: null }
 
-  // Parse numeric from strings like "23 reps" or "30 @16kg"
   const parseNum = (str) => {
     if (!str) return null
     const m = String(str).match(/\d+/)
     return m ? parseInt(m[0]) : null
   }
 
-  const prs = stored.prs ? Object.fromEntries(
+  // Alexandre sans données store → profil statique complet
+  if (!stored || id === 'alexandre') {
+    const prs = stored?.prs && Object.keys(stored.prs).length > 0
+      ? Object.fromEntries(Object.entries(stored.prs).map(([k, v]) => [k, {
+          value: parseNum(v.value), valueStr: v.value,
+          target: parseNum(v.target), targetStr: v.target,
+          label: v.label, unit: 'reps',
+        }]))
+      : null
+    return { athlete: athleteStatic, prs, isAlexandre: true }
+  }
+
+  // Autres athlètes : profil construit UNIQUEMENT depuis les données du store
+  const hasPrs = stored.prs && Object.keys(stored.prs).length > 0
+  const prs = hasPrs ? Object.fromEntries(
     Object.entries(stored.prs).map(([k, v]) => [k, {
-      value: parseNum(v.value),
-      valueStr: v.value,
-      target: parseNum(v.target),
-      targetStr: v.target,
-      label: v.label,
-      unit: 'reps',
+      value: parseNum(v.value), valueStr: v.value,
+      target: parseNum(v.target), targetStr: v.target,
+      label: v.label, unit: 'reps',
     }])
   ) : null
 
   return {
-    athlete: {
-      ...athleteStatic,
-      name: stored.name,
-      goal: stored.goal,
-      context: stored.note || athleteStatic.context,
-      weakPoint: stored.goalShort ? `Objectif court terme : ${stored.goalShort}` : athleteStatic.weakPoint,
-      competitionDate: stored.compDate || athleteStatic.competitionDate,
-    },
+    isAlexandre: false,
     prs,
+    athlete: {
+      name: stored.name || 'Athlète',
+      goal: stored.goal || '',
+      context: stored.note || null,          // null = pas de section contexte
+      weakPoint: stored.goalShort || null,   // null = pas de point faible
+      competitionDate: stored.compDate || null, // null = pas de countdown
+      nextCompetition: stored.compDate ? 'Compétition CBL' : null,
+      defaultWeeklyAvailability: athleteStatic.defaultWeeklyAvailability,
+      level: stored.level,
+      age: stored.age,
+      maxes: null,
+      targets3months: null,
+    },
   }
 }
 
-// Keep backward compat alias
+// Alias statique pour CompetitionProgress (alexandre uniquement)
 const athlete = athleteStatic
 
 function ProfileAvatar({ athleteId, initials }) {
@@ -167,17 +182,18 @@ const MAXES_DISPLAY = [
 ]
 
 export default function Profile() {
-  const { athlete: currentAthlete, prs } = useProfileData()
+  const { athlete: currentAthlete, prs, isAlexandre } = useProfileData()
   const athleteId = getCurrentAthleteId() || 'alexandre'
-  const isAlexandre = athleteId === 'alexandre'
   const initials = currentAthlete.name?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'A'
 
   const maxData = (key) => {
     if (prs?.[key]) return { value: prs[key].value, target: prs[key].target, unit: prs[key].unit, valueStr: prs[key].valueStr, targetStr: prs[key].targetStr }
-    return { value: currentAthlete.maxes?.[key]?.value, target: currentAthlete.targets3months?.[key]?.value, unit: currentAthlete.maxes?.[key]?.unit }
+    if (isAlexandre) return { value: currentAthlete.maxes?.[key]?.value, target: currentAthlete.targets3months?.[key]?.value, unit: currentAthlete.maxes?.[key]?.unit }
+    return {}
   }
 
-  const hasMaxes = MAXES_DISPLAY.some(m => maxData(m.key).value)
+  // N'afficher les maxima que si des données réelles existent
+  const hasMaxes = prs !== null && Object.keys(prs).length > 0
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 space-y-6 animate-fade-in">
@@ -198,17 +214,19 @@ export default function Profile() {
       {/* Countdown — only if athlete has a competition date */}
       {currentAthlete.competitionDate && <CompetitionProgress />}
 
-      {/* Context */}
-      <div className="glass rounded-2xl p-5 border-l-2 border-danger">
-        <div className="label mb-2" style={{ color: '#FF3D3D' }}>Contexte — pourquoi ce plan</div>
-        <p className="text-sm text-text-muted leading-relaxed">{currentAthlete.context}</p>
-        {currentAthlete.weakPoint && (
-          <div className="mt-3 p-3 bg-danger/5 border border-danger/20 rounded-xl">
-            <div className="text-xs font-semibold text-danger mb-1">Point faible identifié</div>
-            <div className="text-sm">{currentAthlete.weakPoint}</div>
-          </div>
-        )}
-      </div>
+      {/* Context — uniquement si données renseignées */}
+      {currentAthlete.context && (
+        <div className="glass rounded-2xl p-5 border-l-2 border-danger">
+          <div className="label mb-2" style={{ color: '#FF3D3D' }}>Contexte — pourquoi ce plan</div>
+          <p className="text-sm text-text-muted leading-relaxed">{currentAthlete.context}</p>
+          {currentAthlete.weakPoint && (
+            <div className="mt-3 p-3 bg-danger/5 border border-danger/20 rounded-xl">
+              <div className="text-xs font-semibold text-danger mb-1">Point faible identifié</div>
+              <div className="text-sm">{currentAthlete.weakPoint}</div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Maxes + targets — only if data exists */}
       {hasMaxes && <div>
@@ -277,7 +295,10 @@ export default function Profile() {
 
       {/* Plan summary — only for alexandre (static plan) */}
       {isAlexandre && <div className="glass rounded-2xl p-5">
-        <div className="label mb-3">Résumé du plan</div>
+        <div className="flex items-center justify-between mb-3">
+          <div className="label">Résumé du plan</div>
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-warn/10 text-warn border border-warn/20 font-medium">Exemple — à personnaliser</span>
+        </div>
         <div className="grid grid-cols-2 gap-3">
           {plan.macroPhases.map(phase => (
             <div key={phase.id} className="bg-surface-2 rounded-xl p-3 border border-border">
