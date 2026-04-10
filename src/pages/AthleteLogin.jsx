@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getAthletes, setCurrentAthleteId, setRole, getRole } from '../utils/coachStore'
@@ -82,9 +82,8 @@ function PinStep({ athlete, onBack }) {
   const [pin, setPin] = useState('')
   const [error, setError] = useState(false)
   const navigate = useNavigate()
-  const hiddenRef = useRef(null)
-
-  useEffect(() => { hiddenRef.current?.focus() }, [])
+  // Ref to track current pin value — avoids stale closure when tapping numpad rapidly
+  const pinRef = useRef('')
 
   const submit = (code) => {
     if (code === athlete.pin) {
@@ -93,19 +92,25 @@ function PinStep({ athlete, onBack }) {
       navigate('/dashboard')
     } else {
       setError(true)
+      pinRef.current = ''
       setTimeout(() => { setPin(''); setError(false) }, 600)
     }
   }
 
   const handleDigit = (d) => {
-    if (pin.length >= 4) return
-    const next = pin + d
+    if (pinRef.current.length >= 4) return
+    const next = pinRef.current + d
+    pinRef.current = next
     setPin(next)
     setError(false)
     if (next.length === 4) submit(next)
   }
 
-  const handleDelete = () => setPin(p => p.slice(0, -1))
+  const handleDelete = () => {
+    const next = pinRef.current.slice(0, -1)
+    pinRef.current = next
+    setPin(next)
+  }
 
   const DIGITS = ['1','2','3','4','5','6','7','8','9','','0','⌫']
 
@@ -117,23 +122,6 @@ function PinStep({ athlete, onBack }) {
       exit={{ opacity: 0, y: -10 }}
       className="space-y-6"
     >
-      {/* Hidden input for keyboard / mobile — onChange only to avoid double-submit */}
-      <input
-        ref={hiddenRef}
-        type="tel"
-        inputMode="numeric"
-        maxLength={4}
-        value={pin}
-        onChange={e => {
-          const val = e.target.value.replace(/\D/g, '').slice(0, 4)
-          setPin(val)
-          setError(false)
-          if (val.length === 4) submit(val)
-        }}
-        className="absolute opacity-0 w-0 h-0"
-        aria-hidden
-      />
-
       <button
         onClick={onBack}
         className="flex items-center gap-2 text-text-muted text-sm hover:text-text-primary transition-colors"
@@ -147,7 +135,6 @@ function PinStep({ athlete, onBack }) {
       <div className="text-center space-y-1">
         <div className="text-text-primary font-semibold">{athlete.name}</div>
         <div className="text-text-muted text-sm">Entre ton code PIN à 4 chiffres</div>
-        <div className="text-[10px] text-text-faint">(clavier ou pavé ci-dessous)</div>
       </div>
 
       {/* Dots */}
