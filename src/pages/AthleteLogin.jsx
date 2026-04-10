@@ -35,7 +35,7 @@ function IdStep({ onFound }) {
       className="space-y-4"
     >
       <p className="text-center text-text-muted text-sm leading-relaxed">
-        Ton coach t'a envoyé un lien ou un code.<br />Entre-le ci-dessous.
+        Ton coach t'a envoyé un lien d'accès.<br />Entre ton prénom ci-dessous.
       </p>
 
       <div>
@@ -43,7 +43,7 @@ function IdStep({ onFound }) {
           type="text"
           value={code}
           onChange={e => { setCode(e.target.value); setError(false) }}
-          placeholder="Ton code athlète (ex : alexandre)"
+          placeholder="Ton prénom (ex : Lucas, Marie…)"
           autoFocus
           autoComplete="off"
           autoCapitalize="off"
