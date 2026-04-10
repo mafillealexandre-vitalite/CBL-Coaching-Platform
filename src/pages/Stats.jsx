@@ -7,10 +7,10 @@ import athlete from '../data/athlete.json'
 import plan from '../data/coaching-plan.json'
 
 const MOVES = [
-  { key: 'pullUp', label: 'Tractions', color: '#00D4FF', unit: 'reps' },
-  { key: 'muscleUp', label: 'Muscle-up', color: '#FF9500', unit: 'reps' },
-  { key: 'dips', label: 'Dips', color: '#FF3D3D', unit: 'reps' },
-  { key: 'pushUp', label: 'Pompes', color: '#00D47A', unit: 'reps' },
+  { key: 'pullUp', label: 'Tractions', color: '#0EA5E9', unit: 'reps' },
+  { key: 'muscleUp', label: 'Muscle-up', color: '#F59E0B', unit: 'reps' },
+  { key: 'dips', label: 'Dips', color: '#EF4444', unit: 'reps' },
+  { key: 'pushUp', label: 'Pompes', color: '#10B981', unit: 'reps' },
   { key: 'gobletSquat', label: 'Goblet @16kg', color: '#A78BFA', unit: 'reps' },
 ]
 
@@ -35,7 +35,7 @@ function savePerfs(perfs) {
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null
   return (
-    <div className="glass rounded-xl p-3 border border-border text-xs">
+    <div className="bg-white rounded-xl p-3 border border-border text-xs shadow-sm">
       <div className="font-semibold mb-2 text-text-muted">{label}</div>
       {payload.map(p => (
         <div key={p.dataKey} className="flex items-center gap-2">
@@ -85,7 +85,7 @@ function AddEntryForm({ onAdd }) {
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       onSubmit={handleSubmit}
-      className="glass rounded-2xl p-5 space-y-4"
+      className="bg-white rounded-2xl p-5 space-y-4 border border-border"
     >
       <div className="flex items-center justify-between">
         <div className="label">Nouveau test</div>
@@ -207,7 +207,7 @@ export default function Stats() {
             key={m.key}
             onClick={() => setActiveMove(m.key)}
             className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-              activeMove === m.key ? 'text-black border-transparent' : 'border-border text-text-muted hover:border-text-faint'
+              activeMove === m.key ? 'text-white border-transparent' : 'border-border text-text-muted hover:border-text-faint'
             }`}
             style={activeMove === m.key ? { backgroundColor: m.color, borderColor: m.color } : {}}
           >
@@ -218,7 +218,7 @@ export default function Stats() {
 
       {/* Current move stats */}
       {move && (
-        <div className="glass rounded-2xl p-5">
+        <div className="bg-white rounded-2xl p-5 border border-border">
           <div className="flex items-end justify-between mb-4">
             <div>
               <div className="label mb-1" style={{ color: move.color }}>{move.label}</div>
@@ -270,8 +270,11 @@ export default function Stats() {
           )}
 
           {chartData.length <= 1 && (
-            <div className="mt-4 py-6 text-center text-xs text-text-faint">
-              Ajoute un test pour voir ta progression
+            <div className="mt-4 p-4 rounded-xl border border-dashed border-border text-center space-y-2">
+              <div className="text-sm font-semibold text-text-primary">Ton graphe apparaîtra ici</div>
+              <div className="text-xs text-text-muted leading-relaxed">
+                Après chaque test de performance, clique sur "Ajouter un test" pour voir ta courbe de progression se construire au fil des semaines.
+              </div>
             </div>
           )}
         </div>
@@ -289,7 +292,7 @@ export default function Stats() {
               <button
                 key={m.key}
                 onClick={() => setActiveMove(m.key)}
-                className={`glass glass-hover rounded-xl p-4 text-left border transition-all ${
+                className={`bg-white rounded-xl p-4 text-left border transition-all hover:shadow-sm ${
                   activeMove === m.key ? 'border-opacity-50' : 'border-border'
                 }`}
                 style={activeMove === m.key ? { borderColor: m.color + '60' } : {}}
@@ -311,7 +314,7 @@ export default function Stats() {
         <div className="label mb-3">Historique</div>
         <div className="space-y-2">
           {[...perfs].reverse().map((entry, i) => (
-            <div key={i} className="glass rounded-xl p-4 flex items-center gap-4">
+            <div key={i} className="bg-white border border-border rounded-xl p-4 flex items-center gap-4">
               <div className="flex-shrink-0">
                 <div className="text-sm font-semibold">{entry.label || entry.date}</div>
                 <div className="text-xs text-text-muted font-mono">{entry.date}</div>

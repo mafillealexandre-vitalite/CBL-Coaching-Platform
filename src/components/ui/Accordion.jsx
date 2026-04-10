@@ -32,7 +32,7 @@ export default function Accordion({ id, title, icon, badge, defaultOpen = false,
   }
 
   return (
-    <div className="glass rounded-2xl overflow-hidden">
+    <div className="bg-white border border-border rounded-2xl overflow-hidden">
       <button
         onClick={toggle}
         className="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-surface-2/50 transition-colors"

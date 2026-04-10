@@ -95,7 +95,7 @@ function VolumeBar({ label, reps, maxReps }) {
 
 // ─── Donut chart (SVG) ────────────────────────────────────────────────────────
 
-const TYPE_COLORS = { force: '#00D4FF', lactate: '#FF3D3D', specificity: '#FF9500', simulation: '#FF3D3D', recovery: '#00D47A' }
+const TYPE_COLORS = { force: '#0EA5E9', lactate: '#EF4444', specificity: '#F59E0B', simulation: '#EF4444', recovery: '#10B981' }
 const TYPE_LABELS = { force: 'Force', lactate: 'Lactique', specificity: 'Circuit', simulation: 'Simulation', recovery: 'Récup' }
 
 function DonutChart({ data, size = 100 }) {
@@ -155,7 +155,7 @@ function DonutChart({ data, size = 100 }) {
 function Card1({ stats }) {
   const doneRatio = stats.sessionsPlanned > 0 ? stats.sessionsDone / stats.sessionsPlanned : 0
   return (
-    <div className="glass p-5 rounded-2xl space-y-4">
+    <div className="bg-white border border-border p-5 rounded-2xl space-y-4">
       <div>
         <div className="text-xs text-text-faint uppercase tracking-wider mb-0.5">
           Semaine {stats.weekNum}
@@ -215,7 +215,7 @@ function Card2({ stats }) {
   const maxReps = Math.max(...Object.values(stats.volume), 1)
   const hasData = Object.values(stats.volume).some(v => v > 0)
   return (
-    <div className="glass p-5 rounded-2xl space-y-4">
+    <div className="bg-white border border-border p-5 rounded-2xl space-y-4">
       <div className="text-xs font-semibold text-text-muted uppercase tracking-wider">Volume par mouvement</div>
       {hasData ? (
         <div className="space-y-2.5">
@@ -235,7 +235,7 @@ function Card2({ stats }) {
 
 function Card3({ stats }) {
   return (
-    <div className="glass p-5 rounded-2xl space-y-4">
+    <div className="bg-white border border-border p-5 rounded-2xl space-y-4">
       <div className="text-xs font-semibold text-text-muted uppercase tracking-wider">Répartition du temps</div>
       <DonutChart data={stats.timeByType} />
     </div>
@@ -254,7 +254,7 @@ function Card4({ stats }) {
   const coach = responses[0]
 
   return (
-    <div className="glass p-5 rounded-2xl space-y-4">
+    <div className="bg-white border border-border p-5 rounded-2xl space-y-4">
       <div className="text-xs font-semibold text-text-muted uppercase tracking-wider">Coach de la semaine</div>
       {coach ? (
         <div>
@@ -309,17 +309,17 @@ export function WeeklyRecap({ weekNum, onClose }) {
 
 function MonthCard1({ stats }) {
   return (
-    <div className="glass p-5 rounded-2xl space-y-4">
+    <div className="bg-white border border-border p-5 rounded-2xl space-y-4">
       <div>
         <div className="text-xs text-text-faint uppercase tracking-wider mb-0.5">Mois {stats.monthIndex + 1}</div>
         <div className="text-lg font-bold text-text-primary leading-tight">{stats.phaseName}</div>
       </div>
       <div className="grid grid-cols-2 gap-2">
         {[
-          { label: 'Temps total', value: stats.totalMinutes >= 60 ? `${Math.floor(stats.totalMinutes / 60)}h ${stats.totalMinutes % 60}m` : `${stats.totalMinutes}m`, color: '#00D4FF' },
-          { label: 'Séances', value: `${stats.sessionsDone}/${stats.sessionsPlanned}`, color: '#00D47A' },
-          { label: 'RPE moyen', value: stats.rpeAvg ?? '—', color: '#FF9500' },
-          { label: 'Régularité', value: stats.sessionsPlanned > 0 ? `${Math.round((stats.sessionsDone / stats.sessionsPlanned) * 100)}%` : '—', color: '#00D47A' },
+          { label: 'Temps total', value: stats.totalMinutes >= 60 ? `${Math.floor(stats.totalMinutes / 60)}h ${stats.totalMinutes % 60}m` : `${stats.totalMinutes}m`, color: '#0EA5E9' },
+          { label: 'Séances', value: `${stats.sessionsDone}/${stats.sessionsPlanned}`, color: '#10B981' },
+          { label: 'RPE moyen', value: stats.rpeAvg ?? '—', color: '#F59E0B' },
+          { label: 'Régularité', value: stats.sessionsPlanned > 0 ? `${Math.round((stats.sessionsDone / stats.sessionsPlanned) * 100)}%` : '—', color: '#10B981' },
         ].map(item => (
           <div key={item.label} className="p-3 rounded-xl bg-surface-2">
             <div className="text-[11px] text-text-faint mb-1">{item.label}</div>
@@ -335,7 +335,7 @@ function MonthCard2({ stats }) {
   const maxReps = Math.max(...Object.values(stats.volume), 1)
   const hasData = Object.values(stats.volume).some(v => v > 0)
   return (
-    <div className="glass p-5 rounded-2xl space-y-3">
+    <div className="bg-white border border-border p-5 rounded-2xl space-y-3">
       <div className="text-xs font-semibold text-text-muted uppercase tracking-wider">Volume mensuel</div>
       {hasData ? (
         <div className="space-y-2.5">
@@ -359,7 +359,7 @@ function MonthCard3({ stats }) {
     }
   }
   return (
-    <div className="glass p-5 rounded-2xl space-y-4">
+    <div className="bg-white border border-border p-5 rounded-2xl space-y-4">
       <div className="text-xs font-semibold text-text-muted uppercase tracking-wider">Répartition mensuelle</div>
       <DonutChart data={timeByType} size={110} />
     </div>
@@ -370,7 +370,7 @@ function MonthCard4({ stats }) {
   // Weekly evolution: sessions done per week
   const maxDone = Math.max(...stats.weeks.map(w => w.sessionsDone), 1)
   return (
-    <div className="glass p-5 rounded-2xl space-y-4">
+    <div className="bg-white border border-border p-5 rounded-2xl space-y-4">
       <div className="text-xs font-semibold text-text-muted uppercase tracking-wider">Progression par semaine</div>
       <div className="space-y-2">
         {stats.weeks.map(week => (

@@ -1,0 +1,30 @@
+/* ─── CBL Coach Pro — Premium Slate Design Tokens ─────────────────────────── */
+
+:root {
+  /* Backgrounds */
+  --bg-base:      #F0EFE9;   /* warm off-white — main page background */
+  --bg-surface:   #FFFFFF;   /* cards, modals */
+  --bg-elevated:  #FAFAF8;   /* subtle panels */
+  --bg-inverse:   #1A2332;   /* dark header/sidebar only */
+
+  /* Text */
+  --text-primary:   #0F1923;
+  --text-secondary: #4A5568;
+  --text-tertiary:  #94A3B8;
+  --text-inverse:   #F8FAFC;
+
+  /* Accents */
+  --accent-cyan:    #0EA5E9;
+  --accent-amber:   #F59E0B;
+  --accent-green:   #10B981;
+  --accent-red:     #EF4444;
+  --accent-purple:  #8B5CF6;
+
+  /* Borders */
+  --border-subtle:  #E2E8F0;
+  --border-medium:  #CBD5E1;
+
+  /* Shadows */
+  --shadow-card:  0 1px 3px rgba(15,25,35,0.08), 0 4px 16px rgba(15,25,35,0.06);
+  --shadow-modal: 0 8px 40px rgba(15,25,35,0.16);
+}

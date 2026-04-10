@@ -2,9 +2,15 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import html2canvas from 'html2canvas'
 import circuitsData from '../data/circuits.json'
+import { PILOT_MODE, findStandard } from '../data/movementStandards'
+import { getCircuitTimes, saveCircuitTimes, uid, getAthletes, getCurrentAthleteId } from '../utils/coachStore'
+import AudioMemoButton from '../components/ExerciseGuide/AudioMemoButton'
+import TechniqueModal from '../components/ExerciseGuide/TechniqueModal'
+import GarminExport from '../components/GarminExport/GarminExport'
 
 const LEVEL_LABELS = { 1: 'Amateur', 2: 'Amateur+', 3: 'Espoir', 4: 'Pro', 5: 'Elite' }
-const LEVEL_COLORS = { 1: '#00D4FF', 2: '#00D4FF', 3: '#FF9500', 4: '#FF6B00', 5: '#FF3D3D' }
+// Updated to Premium Slate accents
+const LEVEL_COLORS = { 1: '#0EA5E9', 2: '#0EA5E9', 3: '#F59E0B', 4: '#EF4444', 5: '#8B5CF6' }
 
 function formatTime(seconds) {
   const m = Math.floor(Math.abs(seconds) / 60)
@@ -18,6 +24,7 @@ function SimulationMode({ circuit, onClose }) {
   const [completedExs, setCompletedExs] = useState({})
   const [phase, setPhase] = useState('countdown')
   const [countdown, setCountdown] = useState(3)
+  const [timeSaved, setTimeSaved] = useState(false)
   const intervalRef = useRef(null)
 
   const remaining = circuit.timeCap - elapsed
@@ -98,11 +105,34 @@ function SimulationMode({ circuit, onClose }) {
         )}
 
         {phase === 'done' && (
-          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center">
-            <div className="text-4xl mb-2">🏆</div>
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center space-y-3">
+            <div className="text-4xl">🏆</div>
             <div className="text-xl font-bold text-success">Circuit terminé !</div>
-            <div className="text-text-muted mt-1">{totalDone}/{circuit.exercises.length} stations · {formatTime(elapsed)}</div>
-            <button onClick={() => { setElapsed(0); setRunning(false); setPhase('countdown'); setCountdown(3); setCompletedExs({}) }} className="btn-primary mt-4">
+            <div className="text-text-muted">{totalDone}/{circuit.exercises.length} stations · {formatTime(elapsed)}</div>
+            {timeSaved ? (
+              <div className="text-sm text-success font-semibold">✓ Temps sauvegardé</div>
+            ) : (
+              <button
+                onClick={() => {
+                  const athleteId = getCurrentAthleteId() || 'alexandre'
+                  const times = getCircuitTimes()
+                  if (!times[athleteId]) times[athleteId] = {}
+                  if (!times[athleteId][circuit.id]) times[athleteId][circuit.id] = []
+                  times[athleteId][circuit.id].push({
+                    id: uid(),
+                    time: elapsed,
+                    date: new Date().toISOString().slice(0, 10),
+                    note: '',
+                  })
+                  saveCircuitTimes(times)
+                  setTimeSaved(true)
+                }}
+                className="w-full py-2.5 rounded-xl font-semibold text-sm bg-success/10 border border-success/30 text-success hover:bg-success/20 transition-all"
+              >
+                Sauvegarder mon temps — {formatTime(elapsed)}
+              </button>
+            )}
+            <button onClick={() => { setElapsed(0); setRunning(false); setPhase('countdown'); setCountdown(3); setCompletedExs({}); setTimeSaved(false) }} className="btn-primary w-full">
               Recommencer
             </button>
           </motion.div>
@@ -114,7 +144,7 @@ function SimulationMode({ circuit, onClose }) {
             {circuit.exercises.map((ex, i) => {
               const done = !!completedExs[i]
               return (
-                <button key={i} onClick={() => setCompletedExs(prev => ({ ...prev, [i]: !prev[i] }))} className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${done ? 'bg-success/5 border-success/30' : 'glass border-border hover:border-text-faint'}`}>
+                <button key={i} onClick={() => setCompletedExs(prev => ({ ...prev, [i]: !prev[i] }))} className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${done ? 'bg-success/5 border-success/30' : 'bg-white border-border hover:border-text-faint'}`}>
                   <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${done ? 'bg-success border-success' : 'border-text-faint'}`}>
                     {done && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>}
                   </div>
@@ -133,18 +163,22 @@ function SimulationMode({ circuit, onClose }) {
   )
 }
 
-function CircuitCard({ circuit, onSimulate }) {
+function CircuitCard({ circuit, onSimulate, circuitIndex }) {
   const cardRef = useRef(null)
   const color = LEVEL_COLORS[circuit.level] || '#888'
   const mins = Math.floor(circuit.timeCap / 60)
   const [exporting, setExporting] = useState(false)
+  const [techniqueStandard, setTechniqueStandard] = useState(null)
+
+  // Pilot mode: only apply audio/technique to first 5 circuits
+  const showGuide = !PILOT_MODE || circuitIndex < 5
 
   const handleExport = async () => {
     if (!cardRef.current || exporting) return
     setExporting(true)
     try {
       const canvas = await html2canvas(cardRef.current, {
-        backgroundColor: '#0D0D0D',
+        backgroundColor: '#FFFFFF',
         scale: 2,
         useCORS: true,
         logging: false,
@@ -162,21 +196,28 @@ function CircuitCard({ circuit, onSimulate }) {
 
   return (
     <div className="w-full shrink-0 px-4">
+      {/* Technique modal */}
+      <TechniqueModal
+        standard={techniqueStandard}
+        isOpen={!!techniqueStandard}
+        onClose={() => setTechniqueStandard(null)}
+      />
+
       {/* Visual card — exportable */}
       <div
         ref={cardRef}
         className="rounded-2xl overflow-hidden"
         style={{
-          background: 'linear-gradient(160deg, #141414 0%, #0A0A0A 100%)',
-          border: `1px solid ${color}20`,
-          boxShadow: `0 0 48px ${color}06`,
+          background: '#FFFFFF',
+          border: `1px solid ${color}25`,
+          boxShadow: `0 1px 3px rgba(15,25,35,0.08), 0 4px 16px rgba(15,25,35,0.06)`,
         }}
       >
         {/* Color top bar */}
-        <div className="h-0.5 w-full" style={{ background: `linear-gradient(90deg, ${color}, transparent 70%)` }} />
+        <div className="h-1 w-full" style={{ background: `linear-gradient(90deg, ${color}, transparent 70%)` }} />
 
         {/* Header */}
-        <div className="px-5 pt-4 pb-3">
+        <div className="px-5 pt-4 pb-3" style={{ background: '#FAFAF8' }}>
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
               <div className="text-[10px] font-bold tracking-widest uppercase mb-1.5" style={{ color }}>
@@ -188,7 +229,7 @@ function CircuitCard({ circuit, onSimulate }) {
               <div className="text-xs text-text-muted mt-0.5 truncate">{circuit.event}</div>
             </div>
             <div
-              className="w-12 h-12 rounded-xl flex flex-col items-center justify-center flex-shrink-0 font-bold text-black"
+              className="w-12 h-12 rounded-xl flex flex-col items-center justify-center flex-shrink-0 font-bold text-white"
               style={{ backgroundColor: color }}
             >
               <span className="text-xl leading-none font-bold">{mins}</span>
@@ -206,31 +247,47 @@ function CircuitCard({ circuit, onSimulate }) {
         </div>
 
         {/* Divider */}
-        <div className="mx-5 h-px bg-border" />
+        <div className="h-px mx-5" style={{ background: '#E2E8F0' }} />
 
         {/* Exercise list */}
-        <div className="px-5 py-4 space-y-2.5">
-          {circuit.exercises.map((ex, i) => (
-            <div key={i} className="flex items-start gap-3">
-              <div
-                className="w-5 h-5 rounded-full text-[10px] font-bold flex-shrink-0 flex items-center justify-center mt-0.5 tabular-nums"
-                style={{ backgroundColor: color + '15', color }}
-              >
-                {i + 1}
-              </div>
-              <div className="flex-1 text-sm leading-snug">
-                <span className="text-text-primary">{ex.label}</span>
-                {ex.weight && (
-                  <span className="ml-2 font-mono text-xs font-semibold" style={{ color: '#FF9500' }}>
-                    @{ex.weight}
-                  </span>
+        <div className="px-5 py-4 space-y-2">
+          {circuit.exercises.map((ex, i) => {
+            const standard = showGuide ? findStandard(ex.label) : null
+            return (
+              <div key={i} className="flex items-center gap-3">
+                <div
+                  className="w-5 h-5 rounded-full text-[10px] font-bold flex-shrink-0 flex items-center justify-center tabular-nums"
+                  style={{ backgroundColor: color + '15', color }}
+                >
+                  {i + 1}
+                </div>
+                <div className="flex-1 min-w-0">
+                  {standard ? (
+                    <button
+                      onClick={() => setTechniqueStandard(standard)}
+                      className="text-sm text-left hover:underline text-text-primary font-medium"
+                      style={{ textDecorationColor: color }}
+                    >
+                      {ex.label}
+                    </button>
+                  ) : (
+                    <span className="text-sm text-text-primary">{ex.label}</span>
+                  )}
+                  {ex.weight && (
+                    <span className="ml-2 font-mono text-xs font-semibold" style={{ color: '#F59E0B' }}>
+                      @{ex.weight}
+                    </span>
+                  )}
+                  {ex.note && (
+                    <div className="text-xs text-text-muted mt-0.5 italic">{ex.note}</div>
+                  )}
+                </div>
+                {showGuide && (
+                  <AudioMemoButton exerciseId={`${circuit.id}-ex${i}`} />
                 )}
-                {ex.note && (
-                  <div className="text-xs text-text-muted mt-0.5 italic">{ex.note}</div>
-                )}
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
 
         {/* Time cap */}
@@ -252,8 +309,8 @@ function CircuitCard({ circuit, onSimulate }) {
         </div>
 
         {circuit.catchUpLine && (
-          <div className="mx-5 mb-4 text-xs text-text-muted bg-surface-2 border border-border rounded-xl px-3 py-2 leading-relaxed">
-            <span className="font-semibold" style={{ color: '#FF9500' }}>Rattrapage · </span>
+          <div className="mx-5 mb-4 text-xs text-text-muted rounded-xl px-3 py-2 leading-relaxed" style={{ background: '#FEF3C7', border: '1px solid #FDE68A' }}>
+            <span className="font-semibold" style={{ color: '#D97706' }}>Rattrapage · </span>
             {circuit.catchUpLine}
           </div>
         )}
@@ -263,8 +320,8 @@ function CircuitCard({ circuit, onSimulate }) {
       <div className="flex gap-2 mt-3">
         <button
           onClick={() => onSimulate(circuit)}
-          className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-xl font-semibold text-sm transition-all active:scale-95"
-          style={{ backgroundColor: color, color: '#000' }}
+          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm transition-all active:scale-95 text-white"
+          style={{ backgroundColor: color }}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
             <polygon points="5 3 19 12 5 21 5 3"/>
@@ -274,7 +331,7 @@ function CircuitCard({ circuit, onSimulate }) {
         <button
           onClick={handleExport}
           disabled={exporting}
-          className="flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl font-medium text-sm border border-border text-text-muted transition-all active:scale-95 hover:border-text-faint hover:text-text-primary disabled:opacity-40"
+          className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium text-sm border border-border text-text-muted transition-all active:scale-95 hover:border-text-faint hover:text-text-primary disabled:opacity-40 bg-white"
         >
           {exporting ? (
             <svg className="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -287,8 +344,28 @@ function CircuitCard({ circuit, onSimulate }) {
               <line x1="12" y1="15" x2="12" y2="3"/>
             </svg>
           )}
-          Exporter
+          PNG
         </button>
+      </div>
+
+      {/* Feature 3: Garmin TCX export */}
+      <GarminExport circuit={circuit} />
+    </div>
+  )
+}
+
+function ObjectiveBlock() {
+  const athleteId = getCurrentAthleteId() || 'alexandre'
+  const athlete = getAthletes().find(a => a.id === athleteId)
+  const goal = athlete?.goalShort
+  const goalMedium = athlete?.goalMedium
+  if (!goal && !goalMedium) return null
+  return (
+    <div className="mx-4 rounded-xl p-4 border border-l-2 border-warn" style={{ background: 'white', borderColor: 'var(--color-border)', borderLeftColor: '#F59E0B' }}>
+      <div className="text-xs text-warn font-semibold mb-1">Objectif</div>
+      <div className="text-xs text-text-muted leading-relaxed">
+        {goal && <div><strong className="text-text-primary">Court terme :</strong> {goal}</div>}
+        {goalMedium && <div className="mt-0.5"><strong className="text-text-primary">Moyen terme :</strong> {goalMedium}</div>}
       </div>
     </div>
   )
@@ -353,7 +430,7 @@ export default function Circuits() {
                 onClick={() => setFilter(f.id)}
                 className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold border transition-all active:scale-95 ${
                   filter === f.id
-                    ? 'bg-brand text-black border-brand'
+                    ? 'bg-brand text-white border-brand'
                     : 'border-border text-text-muted hover:border-text-faint'
                 }`}
               >
@@ -379,9 +456,9 @@ export default function Circuits() {
             msOverflowStyle: 'none',
           }}
         >
-          {filtered.map(circuit => (
+          {filtered.map((circuit, idx) => (
             <div key={circuit.id} className="w-full shrink-0" style={{ scrollSnapAlign: 'start' }}>
-              <CircuitCard circuit={circuit} onSimulate={setSimulatingCircuit} />
+              <CircuitCard circuit={circuit} onSimulate={setSimulatingCircuit} circuitIndex={idx} />
             </div>
           ))}
         </div>
@@ -398,8 +475,8 @@ export default function Circuits() {
                   width: i === activeIndex ? 20 : 6,
                   height: 6,
                   backgroundColor: i === activeIndex
-                    ? (LEVEL_COLORS[filtered[i]?.level] || '#00D4FF')
-                    : '#2A2A2A',
+                    ? (LEVEL_COLORS[filtered[i]?.level] || '#0EA5E9')
+                    : '#CBD5E1',
                 }}
               />
             ))}
@@ -430,12 +507,7 @@ export default function Circuits() {
         </div>
 
         {/* Objective reminder */}
-        <div className="mx-4 glass rounded-xl p-4 border-l-2 border-warn">
-          <div className="text-xs text-warn font-semibold mb-1">Objectif</div>
-          <div className="text-xs text-text-muted leading-relaxed">
-            Prochaine étape : finir <strong className="text-text-primary">OQ7 Amateur 1st Round</strong> en &lt;6 min. Ensuite viser le <strong className="text-text-primary">WOD Espoir</strong>.
-          </div>
-        </div>
+        <ObjectiveBlock />
       </div>
 
       <AnimatePresence>

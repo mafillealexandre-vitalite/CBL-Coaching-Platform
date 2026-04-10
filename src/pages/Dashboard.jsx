@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import athlete from '../data/athlete.json'
 import plan from '../data/coaching-plan.json'
 import StoryCard from '../components/ui/StoryCard'
+import WelcomeModal from '../components/ui/WelcomeModal'
 import Accordion from '../components/ui/Accordion'
 import SessionCompleteModal from '../components/ui/SessionCompleteModal'
 import { WeeklyRecap, MonthlyRecap } from '../components/ui/WeeklyRecap'
 import { estimateSessionDuration, getSessionLog, getPlanWeek } from '../utils/sessionUtils'
+import { uid, getAvailabilityNotifs, saveAvailabilityNotifs, getCoachSessionsForToday, getCurrentAthleteId } from '../utils/coachStore'
 
 const DAYS = [
   { id: 1, short: 'Lun', label: 'Lundi' },
@@ -250,8 +252,8 @@ function MesChiffres({ kpis, onStory, currentWeek, currentMonthIndex }) {
     },
     {
       label: 'Cette semaine',
-      value: `${kpis.thisWeekDone}`,
-      sub: kpis.thisWeekDone === 0 ? 'Aucune encore' : `${kpis.thisWeekDone} faite${kpis.thisWeekDone > 1 ? 's' : ''}`,
+      value: kpis.thisWeekDone > 0 ? `${kpis.thisWeekDone}` : '—',
+      sub: kpis.thisWeekDone === 0 ? 'Lance ta première' : `${kpis.thisWeekDone} faite${kpis.thisWeekDone > 1 ? 's' : ''}`,
       color: kpis.thisWeekDone > 0 ? '#00D4FF' : '#666',
     },
     {
@@ -262,8 +264,8 @@ function MesChiffres({ kpis, onStory, currentWeek, currentMonthIndex }) {
     },
     {
       label: 'Streak',
-      value: `${kpis.streak}j`,
-      sub: kpis.streak === 0 ? 'Lance une séance' : kpis.streak >= 7 ? `${kpis.streak}j sans briser la chaîne.` : 'Continue !',
+      value: kpis.streak > 0 ? `${kpis.streak}j` : '—',
+      sub: kpis.streak === 0 ? 'Lance une séance' : kpis.streak >= 7 ? `${kpis.streak}j sans briser la chaîne` : 'Continue !',
       color: kpis.streak >= 3 ? '#FF9500' : kpis.streak > 0 ? '#00D4FF' : '#666',
     },
   ]
@@ -430,10 +432,13 @@ export default function Dashboard() {
     localStorage.setItem(storageKey, JSON.stringify(newAvail))
   }
 
+  const [disposSent, setDisposSent] = useState(false)
   const activeAvail = showNextWeek ? nextAvailability : availability
   const sessionMap = assignSessionsToDays(availability, template)
-  const activeSessionMap = assignSessionsToDays(activeAvail, template)
-  const todaySessions = sessionMap[today.getDay()] || []
+  // S1: activeSessionMap removed — sessions no longer auto-assigned to days
+  // Feature 3: prefer coach-published sessions for today, fallback to JSON plan
+  const coachSessionsToday = getCoachSessionsForToday(getCurrentAthleteId() || 'alexandre')
+  const todaySessions = coachSessionsToday.length ? coachSessionsToday : (sessionMap[today.getDay()] || [])
   const todaySession = todaySessions[0] || null
   const maxes = athlete.maxes
   const targets = athlete.targets3months
@@ -443,7 +448,34 @@ export default function Dashboard() {
     refreshValidated()
   }
 
+  const handleSendDispos = () => {
+    const DAYS_LABELS = { 1: 'Lun', 2: 'Mar', 3: 'Mer', 4: 'Jeu', 5: 'Ven', 6: 'Sam', 0: 'Dim' }
+    const notif = {
+      id: uid(),
+      athleteId: getCurrentAthleteId() || 'alexandre',
+      athleteName: athlete.name || 'Athlète',
+      days: activeAvail,
+      daysLabels: activeAvail.map(d => DAYS_LABELS[d]).join(', '),
+      weekLabel: showNextWeek ? 'Semaine suivante' : 'Cette semaine',
+      submittedAt: new Date().toISOString(),
+      seen: false,
+    }
+    const existing = getAvailabilityNotifs()
+    saveAvailabilityNotifs([...existing, notif])
+    localStorage.setItem('cbl_dispos_sent_at', new Date().toISOString())
+    setDisposSent(true)
+    setTimeout(() => setDisposSent(false), 3000)
+  }
+
+  const navigate = useNavigate()
   const citation = getWeekCitation(currentWeek)
+
+  const handleGoSession = () => {
+    if (todaySession?._fromCoach) {
+      localStorage.setItem('cbl_active_session_override', JSON.stringify(todaySession))
+    }
+    navigate('/session')
+  }
 
   // Plan week accordion icon
   const planIcon = <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -453,6 +485,7 @@ export default function Dashboard() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-4 animate-fade-in">
+      <WelcomeModal />
       <StoryCard isOpen={storyOpen} onClose={() => setStoryOpen(false)} />
       <SessionCompleteModal
         isOpen={sessionModalOpen}
@@ -476,7 +509,12 @@ export default function Dashboard() {
         <div className="glass rounded-2xl p-5 border border-brand/20 bg-brand/5">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
-              <div className="label mb-0.5" style={{ color: '#00D4FF' }}>Séance du jour</div>
+              <div className="flex items-center gap-2 mb-0.5">
+                <div className="label" style={{ color: '#00D4FF' }}>Séance du jour</div>
+                {todaySession._fromCoach && (
+                  <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: '#10B98120', color: '#10B981' }}>DU COACH</span>
+                )}
+              </div>
               <div className="text-lg font-bold truncate">{todaySession.name}</div>
               <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                 {(() => {
@@ -496,10 +534,10 @@ export default function Dashboard() {
                 </p>
               )}
             </div>
-            <Link to="/session" className="btn-primary flex items-center gap-2 flex-shrink-0">
+            <button onClick={handleGoSession} className="btn-primary flex items-center gap-2 flex-shrink-0">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
               Go
-            </Link>
+            </button>
           </div>
 
           {/* Strip jours */}
@@ -525,23 +563,28 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* No session today but button still accessible */}
+      {/* No session today */}
       {!todaySession && (
-        <div className="glass rounded-2xl p-4 flex items-center gap-3">
-          <div className="flex-1">
-            <div className="text-sm font-medium text-text-muted">Pas de séance programmée aujourd'hui</div>
-            <div className="text-xs text-text-faint mt-0.5">Tu peux quand même valider une séance faite.</div>
+        <div className="glass rounded-2xl p-5 border border-dashed border-border space-y-3">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-brand/10 border border-brand/20 flex items-center justify-center flex-shrink-0">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="2" strokeLinecap="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+              </svg>
+            </div>
+            <div className="flex-1">
+              <div className="text-sm font-semibold text-text-primary">Pas de séance aujourd'hui</div>
+              <div className="text-xs text-text-muted mt-0.5">Ton coach n'a pas encore publié de programme, ou c'est ton jour de repos.</div>
+            </div>
           </div>
-          {validatedToday ? (
-            <div className="text-xs text-success font-semibold">✓ {validatedToday.duration}min</div>
-          ) : (
-            <button
-              onClick={() => setSessionModalOpen(true)}
-              className="px-3 py-2 rounded-xl text-xs font-semibold bg-surface-2 border border-border hover:border-brand/30 hover:text-brand text-text-muted transition-all"
-            >
-              Valider une séance
+          <div className="grid grid-cols-2 gap-2">
+            <button onClick={() => setSessionModalOpen(true)} className="py-2.5 rounded-xl text-xs font-semibold bg-surface-2 border border-border hover:border-brand/30 hover:text-brand text-text-muted transition-all">
+              Valider une séance libre
             </button>
-          )}
+            <a href="/circuits" className="py-2.5 rounded-xl text-xs font-semibold bg-brand/10 border border-brand/20 text-brand hover:bg-brand/20 transition-all text-center">
+              Explorer les circuits
+            </a>
+          </div>
         </div>
       )}
 
@@ -553,7 +596,39 @@ export default function Dashboard() {
           <button onClick={() => setShowNextWeek(true)} className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${showNextWeek ? 'bg-brand text-black' : 'text-text-muted'}`}>Semaine suivante</button>
         </div>
         <AvailabilityPicker availability={activeAvail} onChange={showNextWeek ? handleNextAvailabilityChange : handleAvailabilityChange} />
-        <WeekPlan availability={activeAvail} sessionMap={activeSessionMap} />
+        <button
+          onClick={handleSendDispos}
+          className={`w-full mt-3 py-2.5 rounded-xl border text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
+            disposSent
+              ? 'bg-success/10 border-success/30 text-success'
+              : 'bg-surface-2 border-border text-text-muted hover:border-brand/40 hover:text-brand'
+          }`}
+        >
+          {disposSent ? (
+            <>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Dispos envoyées au coach
+            </>
+          ) : (
+            <>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+              Envoyer mes dispos au coach
+            </>
+          )}
+        </button>
+        {(() => {
+          const sentAt = localStorage.getItem('cbl_dispos_sent_at')
+          if (!sentAt) return null
+          const mins = Math.round((Date.now() - new Date(sentAt)) / 60000)
+          const label = mins < 1 ? 'à l\'instant' : mins < 60 ? `il y a ${mins} min` : `il y a ${Math.floor(mins/60)}h`
+          return (
+            <p className="text-[11px] text-success/70 text-center mt-1">
+              ✓ Dispos envoyées {label} — ton coach adaptera ton plan.
+            </p>
+          )
+        })()}
       </Accordion>
 
       {/* ACCORDION: Mes chiffres */}

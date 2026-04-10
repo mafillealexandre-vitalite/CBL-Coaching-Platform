@@ -222,6 +222,63 @@
         { "label": "10 Dips", "weight": "30kg" },
         { "label": "20 Squat", "weight": "60kg" }
       ]
+    },
+    {
+      "id": "secret-circuit-20",
+      "name": "Circuit Exclusif — Guerrier",
+      "division": "Secret",
+      "event": "CBL Unlocked Content",
+      "timeCap": 480,
+      "level": 3,
+      "tag": "SECRET",
+      "secret": true,
+      "unlocksAt": 20,
+      "exercises": [
+        { "label": "10 Muscle-up" },
+        { "label": "20 Dips", "weight": "20kg" },
+        { "label": "15 Pull-up", "weight": "10kg" },
+        { "label": "30 Push-up" },
+        { "label": "20 Gobelet Squat", "weight": "24kg" }
+      ]
+    },
+    {
+      "id": "secret-protocol-50",
+      "name": "Protocole Elite — Invaincu",
+      "division": "Secret",
+      "event": "CBL Elite Protocol",
+      "timeCap": 600,
+      "level": 4,
+      "tag": "PROTOCOLE ELITE",
+      "secret": true,
+      "unlocksAt": 50,
+      "exercises": [
+        { "label": "5 Muscle-up", "note": "Strict" },
+        { "label": "15 Dips", "weight": "30kg" },
+        { "label": "10 Pull-up", "weight": "20kg" },
+        { "label": "10 Muscle-up" },
+        { "label": "20 Push-up", "note": "Pieds surélevés" },
+        { "label": "25 Squat", "weight": "60kg" }
+      ]
+    },
+    {
+      "id": "secret-competition-100",
+      "name": "Mode Compétition — Légende",
+      "division": "Secret",
+      "event": "CBL Competition Mode",
+      "timeCap": 720,
+      "level": 5,
+      "tag": "MODE COMPÉTITION",
+      "secret": true,
+      "unlocksAt": 100,
+      "exercises": [
+        { "label": "3 Muscle-up", "note": "Pondéré +5kg" },
+        { "label": "10 Dips", "weight": "50kg" },
+        { "label": "8 Muscle-up" },
+        { "label": "15 Pull-up", "weight": "20kg" },
+        { "label": "5 Muscle-up", "note": "Strict" },
+        { "label": "20 Push-up", "note": "Bague ou parallèles" },
+        { "label": "30 Squat", "weight": "60kg" }
+      ]
     }
   ]
 }

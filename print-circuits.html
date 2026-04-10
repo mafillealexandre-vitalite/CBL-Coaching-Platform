@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CBL — Circuits Street (Print)</title>
+<style>
+  /* ─── Reset & base ─── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+    background: #1a1a1a;
+    color: #fff;
+  }
+
+  /* ─── Print page setup ─── */
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
+  @media print {
+    body { background: #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .screen-only { display: none !important; }
+    .page { page-break-after: always; margin: 0; padding: 0; }
+    .page:last-child { page-break-after: avoid; }
+  }
+
+  @media screen {
+    body { padding: 24px; }
+    .page { max-width: 210mm; margin: 0 auto 20px; }
+  }
+
+  /* ─── Screen controls ─── */
+  .screen-only {
+    max-width: 210mm;
+    margin: 0 auto 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .screen-only h1 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.3px;
+  }
+  .screen-only p { font-size: 12px; color: #666; margin-top: 2px; }
+  .btn-print {
+    background: #00D4FF;
+    color: #000;
+    font-weight: 700;
+    font-size: 13px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    white-space: nowrap;
+    letter-spacing: 0.2px;
+  }
+  .btn-print:active { opacity: 0.8; }
+
+  /* ─── Grid page ─── */
+  .page {
+    width: 190mm; /* A4 - 2×10mm margins */
+    min-height: 277mm;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 8mm;
+    align-content: start;
+  }
+
+  /* ─── iPhone 15 card ─── */
+  /*  iPhone 15: 393×852pt → ratio ~0.461
+      card: 88mm × 130mm (close ratio, fits 2×2 with 8mm gap on A4) */
+  .card {
+    width: 100%; /* fills grid column */
+    background: linear-gradient(160deg, #161616 0%, #0C0C0C 100%);
+    border-radius: 10mm; /* iPhone-style rounded corners */
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    border: 1px solid rgba(255,255,255,0.06);
+    /* iPhone-like shadow for screen view */
+    box-shadow: 0 8px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05);
+    aspect-ratio: 9 / 19.5;
+  }
+
+  /* Top color accent bar */
+  .card-accent-bar {
+    height: 2px;
+    width: 100%;
+    flex-shrink: 0;
+  }
+
+  /* Header */
+  .card-header {
+    padding: 4mm 4mm 3mm;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 2mm;
+    flex-shrink: 0;
+  }
+  .card-header-left { flex: 1; min-width: 0; }
+  .card-division {
+    font-size: 7px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 1.5mm;
+  }
+  .card-name {
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 1.25;
+    color: #fff;
+    letter-spacing: -0.2px;
+  }
+  .card-event {
+    font-size: 7px;
+    color: #666;
+    margin-top: 1mm;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .card-timecap-badge {
+    width: 11mm;
+    height: 11mm;
+    border-radius: 2.5mm;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .card-timecap-badge .mins {
+    font-size: 13px;
+    font-weight: 900;
+    line-height: 1;
+    color: #000;
+  }
+  .card-timecap-badge .unit {
+    font-size: 6px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #000;
+    margin-top: 0.5px;
+  }
+
+  /* Tag pill */
+  .card-tag {
+    display: inline-block;
+    margin: 0 4mm 2mm;
+    font-size: 6.5px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 1px 2.5mm;
+    border-radius: 20px;
+    flex-shrink: 0;
+  }
+
+  /* Divider */
+  .card-divider {
+    height: 1px;
+    background: rgba(255,255,255,0.07);
+    margin: 0 4mm;
+    flex-shrink: 0;
+  }
+
+  /* Exercise list */
+  .card-exercises {
+    flex: 1;
+    padding: 3mm 4mm;
+    display: flex;
+    flex-direction: column;
+    gap: 2mm;
+    overflow: hidden;
+  }
+  .exercise-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 2mm;
+  }
+  .exercise-num {
+    width: 4.5mm;
+    height: 4.5mm;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 5.5px;
+    font-weight: 800;
+    flex-shrink: 0;
+    margin-top: 0.3mm;
+  }
+  .exercise-text {
+    flex: 1;
+    font-size: 7.5px;
+    line-height: 1.35;
+    color: #ddd;
+  }
+  .exercise-weight {
+    font-size: 6.5px;
+    font-weight: 700;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    color: #FF9500;
+    margin-left: 1.5mm;
+  }
+  .exercise-note {
+    font-size: 6px;
+    color: #555;
+    font-style: italic;
+    margin-top: 0.5mm;
+  }
+
+  /* Bottom time cap bar */
+  .card-timecap-row {
+    margin: 0 4mm 4mm;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2mm 3mm;
+    border-radius: 2.5mm;
+    flex-shrink: 0;
+  }
+  .timecap-label {
+    font-size: 7px;
+    color: #666;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 1.5mm;
+  }
+  .timecap-value {
+    font-size: 10px;
+    font-weight: 800;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    letter-spacing: 0.02em;
+  }
+
+  /* Catch-up line */
+  .card-catchup {
+    margin: 0 4mm 3mm;
+    padding: 1.5mm 2.5mm;
+    background: rgba(255,255,255,0.03);
+    border-radius: 2mm;
+    border-left: 1.5px solid #FF9500;
+    font-size: 6px;
+    color: #666;
+    line-height: 1.4;
+    flex-shrink: 0;
+  }
+  .card-catchup strong { color: #FF9500; }
+
+  /* ─── CBL logo watermark in header ─── */
+  .cbl-logo {
+    position: absolute;
+    top: 3mm;
+    right: 3mm;
+    opacity: 0;
+  }
+</style>
+</head>
+<body>
+
+<!-- Screen controls (hidden on print) -->
+<div class="screen-only">
+  <div>
+    <h1>CBL — Circuits Street</h1>
+    <p>11 circuits · Format iPhone 15 · 2×2 par page A4</p>
+  </div>
+  <button class="btn-print" onclick="window.print()">Imprimer / Exporter PDF</button>
+</div>
+
+<div id="print-root"></div>
+
+<script>
+const LEVEL_COLORS = { 1: '#00D4FF', 2: '#00D4FF', 3: '#FF9500', 4: '#FF6B00', 5: '#FF3D3D' }
+const LEVEL_LABELS = { 1: 'Amateur', 2: 'Amateur+', 3: 'Espoir', 4: 'Pro', 5: 'Elite' }
+
+const circuits = [
+  {
+    "id": "premiers-pas-t1",
+    "name": "Premiers Pas — 1er Tour",
+    "division": "Amateur (Div 4)",
+    "event": "CBL Premiers Pas 2025",
+    "timeCap": 360,
+    "level": 1,
+    "tag": "ATLAS",
+    "exercises": [
+      { "label": "10 Single Bar Dips + 5 Pull-up", "note": "UNBOXED" },
+      { "label": "10 Dips", "weight": "10kg" },
+      { "label": "15 Push-up" },
+      { "label": "15 Gobelet Squat", "weight": "16kg" },
+      { "label": "1 Muscle-up OU 5 Chest Pull-up" },
+      { "label": "5 Pull-up" },
+      { "label": "15 Push-up" },
+      { "label": "15 Gobelet Squat", "weight": "16kg" }
+    ],
+    "catchUpLine": "3 Single Bar Dips + 5 Pull-up (si hors temps)"
+  },
+  {
+    "id": "premiers-pas-t2",
+    "name": "Premiers Pas — 2e Tour",
+    "division": "Amateur (Div 4)",
+    "event": "CBL Premiers Pas 2025",
+    "timeCap": 360,
+    "level": 1,
+    "tag": "ATLAS",
+    "exercises": [
+      { "label": "1 Pull-up + 1 Muscle-up OU 5 Chest Pull-Up" },
+      { "label": "15 Pull-up + 5 Dips", "weight": "20kg" },
+      { "label": "10 Pull-up + 10 Dips", "weight": "10kg" },
+      { "label": "5 Pull-up + 15 Dips" },
+      { "label": "15 Gobelet Squat", "weight": "15kg" },
+      { "label": "20 Push-up" },
+      { "label": "1 Muscle-up OU 5 Chest Pull-Up" }
+    ]
+  },
+  {
+    "id": "premiers-pas-qf",
+    "name": "Premiers Pas — Quart de Finale",
+    "division": "Amateur (Div 4)",
+    "event": "CBL Premiers Pas 2025",
+    "timeCap": 420,
+    "level": 1,
+    "tag": "ATLAS",
+    "exercises": [
+      { "label": "3 Muscle-up" },
+      { "label": "10 Dips + 10 Dips + 10 Dips", "weight": "28kg au centre" },
+      { "label": "2 Muscle-up" },
+      { "label": "15 Gobelet Squat + 20 Push-up", "weight": "16kg" },
+      { "label": "1 Muscle-up" },
+      { "label": "10 Pull-up" }
+    ]
+  },
+  {
+    "id": "oq7-ama-r1",
+    "name": "OQ7 — Amateur 1st Round",
+    "division": "Amateur",
+    "event": "CBL Open Qualifier #7 Paris 2026",
+    "timeCap": 360,
+    "level": 2,
+    "tag": "Paris 2026",
+    "exercises": [
+      { "label": "1 Muscle-up + 10 Push-up", "note": "5 Chest Pull = 1 MU" },
+      { "label": "1 Muscle-up + 15 Push-up" },
+      { "label": "1 Muscle-up + 20 Push-up" },
+      { "label": "6 Pull-up + 6 Goblet Squat", "weight": "16kg" },
+      { "label": "8 Pull-up + 9 Goblet Squat", "weight": "16kg" },
+      { "label": "10 Pull-up + 12 Goblet Squat", "weight": "16kg" },
+      { "label": "8 Pull-up + 9 Goblet Squat", "weight": "16kg" },
+      { "label": "6 Pull-up + 6 Goblet Squat", "weight": "16kg" }
+    ]
+  },
+  {
+    "id": "oq7-ama-r2",
+    "name": "OQ7 — Amateur 2nd Round",
+    "division": "Amateur",
+    "event": "CBL Open Qualifier #7 Paris 2026",
+    "timeCap": 360,
+    "level": 2,
+    "tag": "Paris 2026",
+    "exercises": [
+      { "label": "5 Chest Pull-up", "weight": "5kg" },
+      { "label": "1 Muscle-up", "note": "5 Chest Pull = 1 MU" },
+      { "label": "15 Dips" },
+      { "label": "12 Dips", "weight": "10kg" },
+      { "label": "9 Dips", "weight": "20kg" },
+      { "label": "12 Pull-up" },
+      { "label": "9 Pull-up", "weight": "5kg" },
+      { "label": "6 Pull-up", "weight": "10kg" },
+      { "label": "3 Pull-up", "weight": "15kg" }
+    ]
+  },
+  {
+    "id": "oq7-ama-hf",
+    "name": "OQ7 — Amateur ½ Finale",
+    "division": "Amateur",
+    "event": "CBL Open Qualifier #7 Paris 2026",
+    "timeCap": 480,
+    "level": 3,
+    "tag": "Paris 2026",
+    "exercises": [
+      { "label": "3 Muscle-up" },
+      { "label": "40 Push-up" },
+      { "label": "2 Muscle-up" },
+      { "label": "20 Goblet Squat", "weight": "16kg" },
+      { "label": "1 Muscle-up" },
+      { "label": "20 Dips", "weight": "15kg" },
+      { "label": "2 Muscle-up" },
+      { "label": "20 Goblet Squat", "weight": "16kg" },
+      { "label": "3 Muscle-up" },
+      { "label": "20 Pull-up" }
+    ]
+  },
+  {
+    "id": "oq7-ama-finale",
+    "name": "OQ7 — Amateur Finale",
+    "division": "Amateur",
+    "event": "CBL Open Qualifier #7 Paris 2026",
+    "timeCap": 600,
+    "level": 3,
+    "tag": "Paris 2026",
+    "exercises": [
+      { "label": "[1 Pull-up + 1 Muscle-up] ×3" },
+      { "label": "20 Push-up" },
+      { "label": "12 Pull-up" },
+      { "label": "15 Goblet Squat", "weight": "16kg" },
+      { "label": "[1 Pull-up + 1 Muscle-up] ×2" },
+      { "label": "15 Dips", "weight": "15kg" },
+      { "label": "8 Pull-up", "weight": "10kg" },
+      { "label": "15 Goblet Squat", "weight": "16kg" },
+      { "label": "[1 Pull-up + 1 Muscle-up] ×1" },
+      { "label": "8 Dips", "weight": "30kg" },
+      { "label": "4 Pull-up", "weight": "20kg" },
+      { "label": "15 Goblet Squat", "weight": "16kg" }
+    ]
+  },
+  {
+    "id": "oq7-elite-finale",
+    "name": "OQ7 — Elite Finale",
+    "division": "Elite (Div 1)",
+    "event": "CBL Open Qualifier #7 Paris 2026",
+    "timeCap": 720,
+    "level": 5,
+    "tag": "RÉFÉRENCE",
+    "exercises": [
+      { "label": "[1 Pull-up + 1 Muscle-up] ×5" },
+      { "label": "30 Push-up" },
+      { "label": "15 Pull-up" },
+      { "label": "15 Goblet Squat", "weight": "32kg" },
+      { "label": "[1 Pull-up + 1 Muscle-up] ×3", "weight": "5kg" },
+      { "label": "15 Dips", "weight": "20kg" },
+      { "label": "8 Pull-up", "weight": "20kg" },
+      { "label": "15 Goblet Squat", "weight": "32kg" },
+      { "label": "[1 Pull-up + 1 Muscle-up] ×1", "weight": "10kg" },
+      { "label": "8 Dips", "weight": "40kg" },
+      { "label": "4 Pull-up", "weight": "30kg" },
+      { "label": "15 Goblet Squat", "weight": "32kg" }
+    ]
+  },
+  {
+    "id": "wod-espoir",
+    "name": "WOD Type — Espoir",
+    "division": "Espoir (Div 3)",
+    "event": "CBL WOD · OBJECTIF",
+    "timeCap": 480,
+    "level": 3,
+    "tag": "OBJECTIF",
+    "exercises": [
+      { "label": "1 Muscle-up + 10 Single Bar Dips + 5 Pull-up" },
+      { "label": "30 Dips" },
+      { "label": "15 Squat", "weight": "40kg" },
+      { "label": "10 Pull-up", "weight": "5kg" },
+      { "label": "20 Dips", "weight": "10kg" },
+      { "label": "15 Squat", "weight": "40kg" },
+      { "label": "10 Dips", "weight": "20kg" },
+      { "label": "1 Muscle-up OU 4 Chest Pull-up" },
+      { "label": "15 Pull-up" }
+    ]
+  },
+  {
+    "id": "wod-pro",
+    "name": "WOD Type — Pro",
+    "division": "Pro (Div 2)",
+    "event": "CBL WOD · Référence",
+    "timeCap": 600,
+    "level": 4,
+    "tag": "RÉFÉRENCE",
+    "exercises": [
+      { "label": "10 Pull-up + 2 Muscle-up + 20 Single Bar Dips" },
+      { "label": "30 Dips", "weight": "15kg" },
+      { "label": "15 Squat", "weight": "60kg" },
+      { "label": "20 Pull-up", "weight": "10kg" },
+      { "label": "20 Dips", "weight": "15kg" },
+      { "label": "15 Squat", "weight": "60kg" },
+      { "label": "40 Push-up" },
+      { "label": "5 Muscle-up" },
+      { "label": "15 Pull-up" }
+    ]
+  },
+  {
+    "id": "wod-elite",
+    "name": "WOD Type — Elite",
+    "division": "Elite (Div 1)",
+    "event": "CBL WOD · Référence",
+    "timeCap": 720,
+    "level": 5,
+    "tag": "RÉFÉRENCE",
+    "exercises": [
+      { "label": "1 Muscle-up", "weight": "15kg" },
+      { "label": "50 Dips" },
+      { "label": "3 Muscle-up", "weight": "10kg" },
+      { "label": "50 Push-up" },
+      { "label": "5 Muscle-up", "weight": "10kg" },
+      { "label": "20 Squat", "weight": "60kg" },
+      { "label": "20 Pull-up", "weight": "15kg" },
+      { "label": "10 Dips", "weight": "50kg" },
+      { "label": "7 Muscle-up" },
+      { "label": "10 Dips", "weight": "30kg" },
+      { "label": "20 Squat", "weight": "60kg" }
+    ]
+  }
+]
+
+function formatTime(s) {
+  const m = Math.floor(s / 60)
+  const sec = s % 60
+  return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`
+}
+
+function buildCard(c) {
+  const color = LEVEL_COLORS[c.level] || '#888'
+  const label = LEVEL_LABELS[c.level] || ''
+  const mins = Math.floor(c.timeCap / 60)
+
+  const exercisesHTML = c.exercises.map((ex, i) => `
+    <div class="exercise-row">
+      <div class="exercise-num" style="background:${color}18;color:${color}">${i+1}</div>
+      <div class="exercise-text">
+        ${ex.label}${ex.weight ? `<span class="exercise-weight">@${ex.weight}</span>` : ''}
+        ${ex.note ? `<div class="exercise-note">${ex.note}</div>` : ''}
+      </div>
+    </div>
+  `).join('')
+
+  const catchupHTML = c.catchUpLine ? `
+    <div class="card-catchup"><strong>Rattrapage · </strong>${c.catchUpLine}</div>
+  ` : ''
+
+  const tagHTML = c.tag ? `
+    <span class="card-tag" style="background:${color}18;color:${color}">${c.tag}</span>
+  ` : ''
+
+  return `
+    <div class="card">
+      <div class="card-accent-bar" style="background:linear-gradient(90deg,${color},transparent 70%)"></div>
+
+      <div class="card-header">
+        <div class="card-header-left">
+          <div class="card-division" style="color:${color}">${label} · ${c.division}</div>
+          <div class="card-name">${c.name}</div>
+          <div class="card-event">${c.event}</div>
+        </div>
+        <div class="card-timecap-badge" style="background:${color}">
+          <span class="mins">${mins}</span>
+          <span class="unit">min</span>
+        </div>
+      </div>
+
+      ${tagHTML}
+
+      <div class="card-divider"></div>
+
+      <div class="card-exercises">${exercisesHTML}</div>
+
+      <div class="card-timecap-row" style="background:${color}0D;border:1px solid ${color}22">
+        <span class="timecap-label">
+          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round">
+            <path d="M5 3h14M5 21h14"/><path d="M7 3v3a5 5 0 0 0 10 0V3"/><path d="M7 21v-3a5 5 0 0 1 10 0v3"/>
+          </svg>
+          Time Cap
+        </span>
+        <span class="timecap-value" style="color:${color}">${mins}:00</span>
+      </div>
+
+      ${catchupHTML}
+    </div>
+  `
+}
+
+// Build pages of 4 circuits each
+const root = document.getElementById('print-root')
+const perPage = 4
+
+for (let i = 0; i < circuits.length; i += perPage) {
+  const slice = circuits.slice(i, i + perPage)
+  const pageDiv = document.createElement('div')
+  pageDiv.className = 'page'
+  pageDiv.innerHTML = slice.map(buildCard).join('')
+  root.appendChild(pageDiv)
+}
+</script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import plan from '../data/coaching-plan.json'
+import { getProgram, getCurrentAthleteId } from '../utils/coachStore'
 
 const PHASE_COLORS = { m1: '#00D4FF', m2: '#FF9500', m3: '#FF3D3D' }
 const TYPE_STYLES = {
@@ -179,106 +180,156 @@ function WeekDetail({ week }) {
   )
 }
 
-// ─── Questionnaire adaptation plan ───────────────────────────────────────────
+// ─── Programme du Coach ───────────────────────────────────────────────────────
 
-const QUESTIONS = [
-  { id: 'objectif',      label: 'Objectif principal',                      type: 'chips',  options: ['Force max', 'Muscle-up', 'Endurance', 'Global CBL'] },
-  { id: 'priorite',      label: 'Focus de la semaine',                     type: 'chips',  options: ['Tractions', 'Muscle-up', 'Dips', 'Circuit', 'Récupération'] },
-  { id: 'disponibilite', label: 'Jours disponibles cette semaine',         type: 'number', min: 1, max: 6 },
-  { id: 'contrainte',    label: 'Contrainte physique ou logistique ?',     type: 'text',   placeholder: 'Douleur, matériel manquant, temps limité...' },
-  { id: 'fatigue',       label: 'Niveau de fatigue actuel',                type: 'scale',  min: 1, max: 5, labels: ['Frais', '', 'Moyen', '', 'Épuisé'] },
-  { id: 'horizon',       label: 'Semaines avant la prochaine compétition', type: 'number', min: 1, max: 20 },
-  { id: 'intention',     label: 'Quel type de séance te correspond ?',     type: 'chips',  options: ['Intensité max', 'Progression propre', 'Volume', 'Récup active'] },
-]
-
-function generatePlanAction(a) {
-  const actions = []
-  if ((a.fatigue || 3) >= 4) actions.push({ color: '#F59E0B', text: 'Réduis le volume de 20 %. Priorité : qualité des répétitions, pas la quantité.' })
-  else if ((a.fatigue || 3) <= 2) actions.push({ color: '#10B981', text: 'Tu es frais. C\'est le bon moment pour une séance intense ou un test de performance.' })
-  if (a.priorite === 'Muscle-up') actions.push({ color: '#0EA5E9', text: 'Bloc muscle-up en début de séance, après l\'échauffement, quand tu es le plus frais.' })
-  else if (a.priorite === 'Tractions') actions.push({ color: '#0EA5E9', text: 'Tractions lestées ou pause 2s en haut. Vise la qualité, pas le max.' })
-  else if (a.priorite === 'Récupération') actions.push({ color: '#10B981', text: 'Semaine de récup active : volume –30 %, intensité douce, mobilité.' })
-  else if (a.priorite === 'Circuit') actions.push({ color: '#F59E0B', text: 'Intègre 2 passages de circuit CBL complet. Chrono et note-le.' })
-  if ((a.disponibilite || 4) <= 2) actions.push({ color: '#F59E0B', text: `${a.disponibilite || 2} jours : concentre-toi sur force (lundi) et spécificité (jeudi).` })
-  if ((a.horizon || 8) <= 3) actions.push({ color: '#EF4444', text: 'Compétition proche. Stop progression de charge. Affûtage : intensité modérée, volume bas.' })
-  if (a.contrainte?.trim()?.length > 2) actions.push({ color: '#94A3B8', text: `Contrainte notée : "${a.contrainte.trim()}". Adapte, n'aggrave rien.` })
-  if (a.intention === 'Intensité max') actions.push({ color: '#EF4444', text: 'Séance à haute intensité : RPE cible 8–9. Bien récupérer 48h après.' })
-  if (actions.length === 0) actions.push({ color: '#0EA5E9', text: 'Plan standard. Suis le template de la semaine en cours.' })
-  return actions.slice(0, 5)
+const WEEK_DAY_COLORS = {
+  Lundi: '#0EA5E9', Mardi: '#10B981', Mercredi: '#F59E0B',
+  Jeudi: '#8B5CF6', Vendredi: '#EF4444', Samedi: '#06B6D4', Dimanche: '#6B7280',
 }
 
-function PlanQuestionnaire() {
-  const KEY = 'cbl_plan_answers'
-  const [answers, setAnswers] = useState(() => { try { return JSON.parse(localStorage.getItem(KEY) || '{}') } catch { return {} } })
-  const [result, setResult] = useState(null)
-  const set = (id, v) => setAnswers(p => ({ ...p, [id]: v }))
+function CoachProgramView() {
+  const program = getProgram(getCurrentAthleteId() || 'alexandre')
+  const [expandedCycles, setExpandedCycles] = useState(new Set())
+  const [expandedBlocs, setExpandedBlocs] = useState(new Set())
+  const [selectedWeek, setSelectedWeek] = useState(null)
 
-  const handleSubmit = () => {
-    localStorage.setItem(KEY, JSON.stringify(answers))
-    setResult(generatePlanAction(answers))
+  const publishedCycles = (program.cycles || []).map(c => ({
+    ...c,
+    blocs: (c.blocs || []).map(b => ({
+      ...b,
+      weeks: (b.weeks || []).filter(w => w.status === 'published'),
+    })).filter(b => b.weeks.length > 0),
+  })).filter(c => c.blocs.length > 0)
+
+  if (publishedCycles.length === 0) {
+    return (
+      <div className="glass rounded-2xl p-8 text-center border border-dashed border-border space-y-4">
+        <div className="w-14 h-14 rounded-2xl bg-brand/10 border border-brand/20 flex items-center justify-center mx-auto">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="1.5" strokeLinecap="round">
+            <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+        </div>
+        <div>
+          <div className="text-text-primary font-semibold mb-1">Ton programme arrive bientôt</div>
+          <div className="text-xs text-text-muted leading-relaxed max-w-xs mx-auto">
+            Ton coach prépare ton plan d'entraînement personnalisé. Il apparaîtra ici dès qu'il sera publié.
+          </div>
+        </div>
+        <div className="text-[10px] text-text-faint">En attendant, tu peux explorer les circuits CBL et envoyer tes disponibilités.</div>
+      </div>
+    )
   }
 
-  if (result) return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="label">Plan d'action ajusté</div>
-        <button onClick={() => setResult(null)} className="text-xs text-text-faint hover:text-brand transition-colors">Recommencer</button>
-      </div>
-      <div className="space-y-2.5">
-        {result.map((action, i) => (
-          <motion.div key={i} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.1 }}
-            className="flex gap-3 p-3.5 rounded-xl border" style={{ borderColor: action.color + '40', backgroundColor: action.color + '08' }}>
-            <div className="w-1 rounded-full flex-shrink-0 mt-1" style={{ backgroundColor: action.color, minHeight: 16 }} />
-            <p className="text-sm text-text-primary leading-relaxed">{action.text}</p>
-          </motion.div>
-        ))}
-      </div>
-      <p className="text-[11px] text-text-faint italic text-center pt-1">"Reste dans le processus. Les résultats suivent."</p>
-    </motion.div>
-  )
+  const toggleCycle = (id) => setExpandedCycles(prev => {
+    const next = new Set(prev)
+    next.has(id) ? next.delete(id) : next.add(id)
+    return next
+  })
+  const toggleBloc = (id) => setExpandedBlocs(prev => {
+    const next = new Set(prev)
+    next.has(id) ? next.delete(id) : next.add(id)
+    return next
+  })
 
   return (
-    <div className="space-y-5">
-      {QUESTIONS.map(q => (
-        <div key={q.id}>
-          <div className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-2.5">{q.label}</div>
-          {q.type === 'chips' && (
-            <div className="flex flex-wrap gap-2">
-              {q.options.map(opt => {
-                const active = answers[q.id] === opt
-                return <button key={opt} onClick={() => set(q.id, active ? null : opt)}
-                  className={`px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${active ? 'bg-brand text-white border-brand' : 'border-border text-text-muted hover:border-text-faint hover:text-text-primary'}`}>{opt}</button>
-              })}
+    <div className="space-y-3">
+      {publishedCycles.map(cycle => (
+        <div key={cycle.id} className="glass rounded-2xl border border-border overflow-hidden">
+          <button className="w-full flex items-center gap-3 p-4 text-left" onClick={() => toggleCycle(cycle.id)}>
+            <div className="flex-1">
+              <div className="font-semibold text-text-primary text-sm">{cycle.name}</div>
+              {cycle.objective && <div className="text-xs text-text-muted mt-0.5">{cycle.objective}</div>}
             </div>
-          )}
-          {q.type === 'number' && (
-            <div className="flex items-center gap-3">
-              <button onClick={() => set(q.id, Math.max(q.min, (answers[q.id] || q.min) - 1))} className="w-9 h-9 rounded-xl bg-surface-2 border border-border text-lg font-bold hover:border-brand/30 transition-colors">−</button>
-              <div className="text-2xl font-bold tabular-nums text-brand w-12 text-center">{answers[q.id] || q.min}</div>
-              <button onClick={() => set(q.id, Math.min(q.max, (answers[q.id] || q.min) + 1))} className="w-9 h-9 rounded-xl bg-surface-2 border border-border text-lg font-bold hover:border-brand/30 transition-colors">+</button>
-            </div>
-          )}
-          {q.type === 'scale' && (
-            <div className="space-y-2">
-              <div className="flex gap-2">
-                {Array.from({ length: q.max - q.min + 1 }, (_, i) => i + q.min).map(v => {
-                  const active = answers[q.id] === v
-                  return <button key={v} onClick={() => set(q.id, v)}
-                    className={`flex-1 py-2.5 rounded-xl border text-sm font-bold transition-all ${active ? 'bg-brand text-white border-brand' : 'border-border text-text-muted hover:border-brand/30'}`}>{v}</button>
-                })}
-              </div>
-              <div className="flex justify-between text-[10px] text-text-faint px-0.5"><span>{q.labels[0]}</span><span>{q.labels[4]}</span></div>
-            </div>
-          )}
-          {q.type === 'text' && (
-            <input type="text" value={answers[q.id] || ''} onChange={e => set(q.id, e.target.value)} placeholder={q.placeholder}
-              className="w-full bg-surface-2 border border-border rounded-xl px-4 py-2.5 text-sm text-text-primary focus:outline-none focus:border-brand placeholder-text-faint" />
-          )}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+              className={`flex-shrink-0 text-text-faint transition-transform ${expandedCycles.has(cycle.id) ? 'rotate-180' : ''}`}>
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+
+          <AnimatePresence>
+            {expandedCycles.has(cycle.id) && (
+              <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="overflow-hidden">
+                <div className="border-t border-border space-y-1 p-3">
+                  {cycle.blocs.map(bloc => (
+                    <div key={bloc.id}>
+                      <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-2 text-left transition-colors" onClick={() => toggleBloc(bloc.id)}>
+                        <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: '#0EA5E9' }} />
+                        <span className="text-sm font-medium text-text-primary flex-1">{bloc.name}</span>
+                        <span className="text-[10px] text-text-faint">{bloc.weeks.length} sem.</span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                          className={`flex-shrink-0 text-text-faint transition-transform ${expandedBlocs.has(bloc.id) ? 'rotate-180' : ''}`}>
+                          <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                      </button>
+
+                      <AnimatePresence>
+                        {expandedBlocs.has(bloc.id) && (
+                          <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="overflow-hidden ml-4">
+                            <div className="space-y-1 py-1">
+                              {bloc.weeks.map(week => (
+                                <div key={week.id}>
+                                  <button
+                                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-all text-sm ${
+                                      selectedWeek?.id === week.id ? 'bg-brand/10 border border-brand/30 text-brand' : 'hover:bg-surface-2 text-text-muted'
+                                    }`}
+                                    onClick={() => setSelectedWeek(selectedWeek?.id === week.id ? null : week)}
+                                  >
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                                      <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+                                      <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                                    </svg>
+                                    <span className="flex-1 font-medium">{week.name}</span>
+                                    <span className="text-[10px]">{(week.sessions || []).length} séance{(week.sessions||[]).length!==1?'s':''}</span>
+                                  </button>
+
+                                  <AnimatePresence>
+                                    {selectedWeek?.id === week.id && (
+                                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                                        <div className="ml-2 mt-1 mb-2 space-y-2">
+                                          {(week.sessions || []).map(session => (
+                                            <div key={session.id} className="glass rounded-xl p-3 border border-border">
+                                              <div className="flex items-center gap-2 mb-2">
+                                                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: WEEK_DAY_COLORS[session.day] || '#888' }} />
+                                                <span className="text-sm font-semibold text-text-primary">{session.day}</span>
+                                                <span className="text-xs text-text-faint ml-auto">{(session.exercises||[]).length} exercice{(session.exercises||[]).length!==1?'s':''}</span>
+                                              </div>
+                                              {session.coachNote && (
+                                                <p className="text-xs text-text-muted italic mb-2 leading-relaxed">"{session.coachNote}"</p>
+                                              )}
+                                              <div className="space-y-1">
+                                                {(session.exercises || []).map((ex, i) => (
+                                                  <div key={ex.id || i} className="flex items-center gap-2 text-xs">
+                                                    <span className="text-text-faint w-4 tabular-nums">{i+1}.</span>
+                                                    <span className="text-text-primary flex-1 font-medium">{ex.name}</span>
+                                                    {ex.sets && <span className="font-mono text-text-muted">{ex.sets}×{ex.reps}</span>}
+                                                    {ex.weight && <span className="font-mono text-warn/80">{ex.weight}</span>}
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            </div>
+                                          ))}
+                                          {(week.sessions||[]).length === 0 && (
+                                            <div className="text-xs text-text-faint px-3 py-2">Aucune séance dans cette semaine.</div>
+                                          )}
+                                        </div>
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+                                </div>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       ))}
-      <button onClick={handleSubmit} className="w-full py-3.5 rounded-2xl font-bold text-white text-sm bg-brand hover:bg-brand-dim active:scale-98 transition-all">
-        Générer mon plan d'action
-      </button>
     </div>
   )
 }
@@ -286,16 +337,14 @@ function PlanQuestionnaire() {
 // ─── Plan component ───────────────────────────────────────────────────────────
 
 export default function Plan() {
-  const [activeTab, setActiveTab] = useState('macro')
+  const [activeTab, setActiveTab] = useState('coach')
   const [expandedMeso, setExpandedMeso] = useState(null)
   const [selectedWeek, setSelectedWeek] = useState(1)
 
   const tabs = [
+    { id: 'coach', label: 'Du Coach' },
     { id: 'macro', label: 'Macro' },
-    { id: 'meso', label: 'Méso' },
-    { id: 'micro', label: 'Micro' },
     { id: 'objectives', label: 'Jalons' },
-    { id: 'adapter', label: 'Adapter' },
   ]
 
   return (
@@ -412,13 +461,14 @@ export default function Plan() {
         </motion.div>
       )}
 
-      {/* Adapter */}
-      {activeTab === 'adapter' && (
-        <motion.div key="adapter" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-          <p className="text-sm text-text-muted">Réponds en 30 secondes. Le plan s'ajuste à ta réalité.</p>
-          <div className="glass rounded-2xl p-5">
-            <PlanQuestionnaire />
+      {/* Du Coach */}
+      {activeTab === 'coach' && (
+        <motion.div key="coach" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+          <div>
+            <p className="text-sm text-text-muted">Programme publié par Nicolas Natanek — lecture seule.</p>
+            <p className="text-xs text-text-faint mt-0.5">Seules les semaines validées et envoyées sont visibles ici.</p>
           </div>
+          <CoachProgramView />
         </motion.div>
       )}
 

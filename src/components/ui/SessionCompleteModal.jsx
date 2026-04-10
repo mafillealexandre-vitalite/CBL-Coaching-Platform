@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { logSession, getPlanWeek, getSessionLog } from '../../utils/sessionUtils'
+import { saveRpeExercises, getRpeExercises } from '../../utils/coachStore'
 
 const SESSION_COLORS = {
   force: '#0EA5E9',
@@ -42,12 +43,25 @@ function getCurrentSerie() {
   return serie
 }
 
+const RPE_COLOR = (v) => {
+  if (v <= 3) return '#10B981'
+  if (v <= 6) return '#F59E0B'
+  if (v <= 8) return '#F97316'
+  return '#EF4444'
+}
+
 export default function SessionCompleteModal({ isOpen, onClose, session, onSaved }) {
   const [rpe, setRpe] = useState(7)
   const [duration, setDuration] = useState(45)
   const [note, setNote] = useState('')
   const [step, setStep] = useState('form') // 'form' | 'confirm'
   const [serie, setSerie] = useState(0)
+  const [exerciseRpe, setExerciseRpe] = useState({})
+  const [showExRpe, setShowExRpe] = useState(false)
+
+  const exercises = session
+    ? [...(session.warmup || []), ...(session.main || []), ...(session.finisher || [])].filter(ex => ex.exercise || ex.label)
+    : []
 
   const color = SESSION_COLORS[session?.type] || '#0EA5E9'
   const week = getPlanWeek(new Date())
@@ -69,6 +83,18 @@ export default function SessionCompleteModal({ isOpen, onClose, session, onSaved
       note,
       week,
     })
+    // Save per-exercise RPE if any
+    if (exercises.length > 0) {
+      const prev = getRpeExercises()
+      saveRpeExercises([...prev, {
+        date: new Date().toISOString(),
+        sessionName: session?.name || 'Séance',
+        exercises: exercises.map((ex, i) => ({
+          name: ex.exercise || ex.label,
+          rpe: exerciseRpe[i] ?? 0,
+        })),
+      }])
+    }
     setSerie(getCurrentSerie())
     onSaved?.()
     setStep('confirm')
@@ -79,6 +105,8 @@ export default function SessionCompleteModal({ isOpen, onClose, session, onSaved
     setRpe(7)
     setDuration(45)
     setNote('')
+    setExerciseRpe({})
+    setShowExRpe(false)
     onClose()
   }
 
@@ -141,6 +169,43 @@ export default function SessionCompleteModal({ isOpen, onClose, session, onSaved
                       <span>Léger</span><span>Optimal</span><span>Max</span>
                     </div>
                   </div>
+
+                  {/* RPE par exercice */}
+                  {exercises.length > 0 && (
+                    <div>
+                      <button
+                        onClick={() => setShowExRpe(v => !v)}
+                        className="flex items-center gap-1.5 text-xs text-text-faint hover:text-brand transition-colors"
+                      >
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                          <polyline points={showExRpe ? '18 15 12 9 6 15' : '6 9 12 15 18 9'}/>
+                        </svg>
+                        RPE par exercice {showExRpe ? '' : '(optionnel)'}
+                      </button>
+                      <AnimatePresence>
+                        {showExRpe && (
+                          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                            <div className="mt-2 space-y-2">
+                              {exercises.map((ex, i) => {
+                                const v = exerciseRpe[i] ?? 5
+                                return (
+                                  <div key={i} className="flex items-center gap-2">
+                                    <span className="text-[11px] text-text-muted flex-1 truncate">{ex.exercise || ex.label}</span>
+                                    <input
+                                      type="range" min="0" max="10" step="1" value={v}
+                                      onChange={e => setExerciseRpe(prev => ({ ...prev, [i]: +e.target.value }))}
+                                      className="w-20 h-1 accent-brand"
+                                    />
+                                    <span className="text-xs font-bold tabular-nums w-4" style={{ color: RPE_COLOR(v) }}>{v}</span>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  )}
 
                   {/* Note */}
                   <div>

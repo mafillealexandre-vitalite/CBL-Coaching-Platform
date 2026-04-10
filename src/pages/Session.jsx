@@ -1,10 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import plan from '../data/coaching-plan.json'
 import { estimateSessionDuration } from '../utils/sessionUtils'
 import SessionExport from '../components/ui/SessionExport'
 import { GarminExportButton } from '../components/ui/SessionExport'
 import SessionCompleteModal from '../components/ui/SessionCompleteModal'
+import { loadImportedSessions } from '../utils/excelParser'
+import { getCoachWeekSessions, getCurrentAthleteId } from '../utils/coachStore'
+import WorkoutVoiceTimer, { parseWorkout } from '../components/ui/WorkoutVoiceTimer'
 
 function CoachAudio({ sessionName }) {
   const [url, setUrl] = useState(() => { try { return JSON.parse(localStorage.getItem('cbl_audio_urls') || '{}')[sessionName] || '' } catch { return '' } })
@@ -139,57 +143,76 @@ function Timer({ isRunning, elapsed, timeCap, onToggle, onReset }) {
   )
 }
 
-function ExerciseRow({ exercise, index, completed, onToggle }) {
+function ExerciseRow({ exercise, index, completed, onToggle, onTimerOpen }) {
+  const exerciseText = exercise.exercise || exercise.label || ''
+  const hasTimer = !!parseWorkout(exerciseText)
+
   return (
-    <motion.div
-      layout
-      className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer ${
-        completed
-          ? 'bg-success/5 border-success/20 opacity-60'
-          : 'glass border-border hover:border-text-faint'
-      }`}
-      onClick={onToggle}
-    >
-      {/* Checkbox */}
-      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${
-        completed ? 'bg-success border-success' : 'border-text-faint'
-      }`}>
-        {completed && (
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round">
-            <polyline points="20 6 9 17 4 12"/>
+    <motion.div layout className="space-y-1">
+      <div
+        className={`flex items-start gap-3 p-3 rounded-xl border transition-all cursor-pointer ${
+          completed
+            ? 'bg-success/5 border-success/20 opacity-60'
+            : 'glass border-border hover:border-text-faint'
+        }`}
+        onClick={onToggle}
+      >
+        {/* Checkbox */}
+        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-all ${
+          completed ? 'bg-success border-success' : 'border-text-faint'
+        }`}>
+          {completed && (
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          )}
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <div className={`text-sm font-medium ${completed ? 'line-through text-text-muted' : ''}`}>
+            {exerciseText}
+          </div>
+          <div className="flex flex-wrap gap-2 mt-1">
+            {exercise.sets && (
+              <span className="text-xs font-mono text-text-faint">{exercise.sets} × {exercise.reps}</span>
+            )}
+            {exercise.weight && (
+              <span className="text-xs font-mono text-warn/80">{exercise.weight}</span>
+            )}
+            {exercise.rest && (
+              <span className="text-xs font-mono text-text-faint">récup {exercise.rest}s</span>
+            )}
+            {exercise.duration && (
+              <span className="text-xs font-mono text-text-faint">{exercise.duration}s</span>
+            )}
+            {exercise.note && (
+              <span className="text-xs text-text-muted italic">{exercise.note}</span>
+            )}
+          </div>
+        </div>
+
+        <div className="text-xs font-mono text-text-faint flex-shrink-0">#{index + 1}</div>
+      </div>
+
+      {/* Vocal timer button — only for EMOM/AMRAP/Tabata */}
+      {hasTimer && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onTimerOpen(exercise) }}
+          className="w-full flex items-center justify-center gap-2 py-2 rounded-lg border border-dashed border-brand/30 text-brand text-xs font-semibold hover:bg-brand/5 transition-all active:scale-95"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
           </svg>
-        )}
-      </div>
-
-      <div className="flex-1 min-w-0">
-        <div className={`text-sm font-medium ${completed ? 'line-through text-text-muted' : ''}`}>
-          {exercise.exercise || exercise.label}
-        </div>
-        <div className="flex flex-wrap gap-2 mt-1">
-          {exercise.sets && (
-            <span className="text-xs font-mono text-text-faint">{exercise.sets} × {exercise.reps}</span>
-          )}
-          {exercise.weight && (
-            <span className="text-xs font-mono text-warn/80">{exercise.weight}</span>
-          )}
-          {exercise.rest && (
-            <span className="text-xs font-mono text-text-faint">récup {exercise.rest}s</span>
-          )}
-          {exercise.duration && (
-            <span className="text-xs font-mono text-text-faint">{exercise.duration}s</span>
-          )}
-          {exercise.note && (
-            <span className="text-xs text-text-muted italic">{exercise.note}</span>
-          )}
-        </div>
-      </div>
-
-      <div className="text-xs font-mono text-text-faint flex-shrink-0">#{index + 1}</div>
+          Minuteur vocal guidé
+        </button>
+      )}
     </motion.div>
   )
 }
 
-function SectionBlock({ title, exercises, completed, onToggle, color = '#888' }) {
+function SectionBlock({ title, exercises, completed, onToggle, onTimerOpen, color = '#888' }) {
   if (!exercises || exercises.length === 0) return null
   return (
     <div>
@@ -208,6 +231,7 @@ function SectionBlock({ title, exercises, completed, onToggle, color = '#888' })
             index={i}
             completed={!!completed[title + i]}
             onToggle={() => onToggle(title + i)}
+            onTimerOpen={onTimerOpen}
           />
         ))}
       </div>
@@ -216,8 +240,7 @@ function SectionBlock({ title, exercises, completed, onToggle, color = '#888' })
 }
 
 function SessionSelector({ currentSession, onSelect }) {
-  const today = new Date().getDay()
-
+  const navigate = useNavigate()
   const getWeekNumber = () => {
     const start = new Date('2026-04-07')
     const diff = (new Date() - start) / (1000 * 60 * 60 * 24)
@@ -233,34 +256,132 @@ function SessionSelector({ currentSession, onSelect }) {
   })()
 
   const TYPE_COLORS = { force: '#00D4FF', lactate: '#FF3D3D', specificity: '#FF9500', simulation: '#FF3D3D', recovery: '#00D47A' }
+  const importedSessions = loadImportedSessions()
+  const coachWeek = getCoachWeekSessions(getCurrentAthleteId() || 'alexandre')
 
   return (
-    <div className="glass rounded-2xl p-5">
-      <div className="label mb-3">Séances disponibles — Semaine {week}</div>
-      <div className="grid gap-2">
-        {template.sessions.map((s, i) => {
-          const color = TYPE_COLORS[s.type] || '#888'
-          const isActive = currentSession?.name === s.name
-          return (
-            <button
-              key={i}
-              onClick={() => onSelect(s)}
-              className={`text-left p-3 rounded-xl border transition-all ${
-                isActive ? 'border-brand/40 bg-brand/5' : 'border-border hover:border-text-faint glass-hover glass'
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
-                <span className="text-sm font-semibold">{s.name}</span>
-                <span className="ml-auto text-xs font-mono capitalize" style={{ color }}>{s.type}</span>
-              </div>
-              <div className="text-xs text-text-muted mt-1 ml-4">
-                {(s.main || []).length} exercices principaux
-              </div>
-            </button>
-          )
-        })}
+    <div className="glass rounded-2xl p-5 space-y-4">
+      {/* No coach program yet — helper */}
+      {coachWeek.sessions.length === 0 && (
+        <div className="flex items-start gap-3 p-3 rounded-xl bg-brand/5 border border-brand/15">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="2" strokeLinecap="round" className="flex-shrink-0 mt-0.5">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <div className="text-xs text-text-muted leading-relaxed">
+            <span className="font-semibold text-text-primary">Programme coach non encore publié.</span> En attendant, des séances types sont disponibles ci-dessous — ou explore les circuits CBL depuis le menu.
+          </div>
+        </div>
+      )}
+
+      {/* Coach sessions — top priority */}
+      {coachWeek.sessions.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <div className="label">Programme du coach</div>
+            <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: '#10B98120', color: '#10B981' }}>{coachWeek.weekName}</span>
+          </div>
+          <div className="grid gap-2">
+            {coachWeek.sessions.map(s => {
+              const color = TYPE_COLORS[s.type] || '#888'
+              const isActive = currentSession?.id === s.id
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => onSelect(s)}
+                  className={`text-left p-3 rounded-xl border transition-all ${
+                    isActive ? 'border-success/40 bg-success/5' : 'border-border hover:border-text-faint glass-hover glass'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: '#10B981' }} />
+                    <span className="text-sm font-semibold">{s.name}</span>
+                    <span className="ml-auto text-[9px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: '#10B98120', color: '#10B981' }}>COACH</span>
+                  </div>
+                  <div className="text-xs text-text-muted mt-1 ml-4">
+                    {(s.main || []).length} exercices · {s.type}
+                    {s.intention && <span className="italic"> · "{s.intention.slice(0, 40)}{s.intention.length > 40 ? '…' : ''}"</span>}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Plan sessions */}
+      <div>
+        <div className="label mb-3">Plan JSON — Semaine {week}</div>
+        <div className="grid gap-2">
+          {template.sessions.map((s, i) => {
+            const color = TYPE_COLORS[s.type] || '#888'
+            const isActive = currentSession?.name === s.name && !currentSession?._imported
+            return (
+              <button
+                key={i}
+                onClick={() => onSelect(s)}
+                className={`text-left p-3 rounded-xl border transition-all ${
+                  isActive ? 'border-brand/40 bg-brand/5' : 'border-border hover:border-text-faint glass-hover glass'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                  <span className="text-sm font-semibold">{s.name}</span>
+                  <span className="ml-auto text-xs font-mono capitalize" style={{ color }}>{s.type}</span>
+                </div>
+                <div className="text-xs text-text-muted mt-1 ml-4">
+                  {(s.main || []).length} exercices principaux
+                </div>
+              </button>
+            )
+          })}
+        </div>
       </div>
+
+      {/* Imported sessions */}
+      {importedSessions.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <div className="label">Séances importées</div>
+            <button onClick={() => navigate('/import')} className="text-[10px] text-brand hover:underline">
+              + Importer
+            </button>
+          </div>
+          <div className="grid gap-2">
+            {importedSessions.map((s) => {
+              const isActive = currentSession?.id === s.id
+              const total = (s.warmup?.length || 0) + (s.main?.length || 0) + (s.finisher?.length || 0)
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => onSelect({ ...s, _imported: true })}
+                  className={`text-left p-3 rounded-xl border transition-all ${
+                    isActive ? 'border-brand/40 bg-brand/5' : 'border-border hover:border-text-faint glass-hover glass'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: '#A78BFA' }} />
+                    <span className="text-sm font-semibold">{s.name}</span>
+                    <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded-full font-medium"
+                      style={{ background: '#A78BFA20', color: '#A78BFA' }}>
+                      Excel
+                    </span>
+                  </div>
+                  <div className="text-xs text-text-muted mt-1 ml-4">{total} exercices</div>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {importedSessions.length === 0 && (
+        <button
+          onClick={() => navigate('/import')}
+          className="w-full py-2.5 rounded-xl border border-dashed border-border text-xs text-text-muted hover:border-brand/40 hover:text-brand transition-all"
+        >
+          + Importer une séance depuis Excel
+        </button>
+      )}
     </div>
   )
 }
@@ -277,12 +398,22 @@ export default function Session() {
 
   const todaySession = template.sessions.find(s => s.daySlot === today.getDay()) || template.sessions[0]
 
-  const [session, setSession] = useState(todaySession)
+  const [session, setSession] = useState(() => {
+    const override = localStorage.getItem('cbl_active_session_override')
+    if (override) {
+      try {
+        localStorage.removeItem('cbl_active_session_override')
+        return { ...JSON.parse(override), _imported: true }
+      } catch {}
+    }
+    return todaySession
+  })
   const [completed, setCompleted] = useState({})
   const [elapsed, setElapsed] = useState(0)
   const [running, setRunning] = useState(false)
   const [showSelector, setShowSelector] = useState(false)
   const [showValidate, setShowValidate] = useState(false)
+  const [voiceTimerExercise, setVoiceTimerExercise] = useState(null)
   const intervalRef = useRef(null)
 
   useEffect(() => {
@@ -319,6 +450,14 @@ export default function Session() {
         session={session}
       />
 
+      {/* Vocal timer modal */}
+      {voiceTimerExercise && (
+        <WorkoutVoiceTimer
+          exercise={voiceTimerExercise}
+          onClose={() => setVoiceTimerExercise(null)}
+        />
+      )}
+
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
@@ -328,6 +467,11 @@ export default function Session() {
             {session && (
               <span className="tag text-xs px-2 py-0.5 rounded border" style={{ color: sessionColor, borderColor: sessionColor + '40', backgroundColor: sessionColor + '10' }}>
                 {session.type}
+              </span>
+            )}
+            {session?._imported && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: '#A78BFA20', color: '#A78BFA' }}>
+                Excel
               </span>
             )}
             <span className="text-xs text-text-muted">Semaine {week}</span>
@@ -415,6 +559,7 @@ export default function Session() {
             exercises={session.warmup}
             completed={completed}
             onToggle={toggleExercise}
+            onTimerOpen={setVoiceTimerExercise}
             color="#888"
           />
           <SectionBlock
@@ -422,6 +567,7 @@ export default function Session() {
             exercises={session.main}
             completed={completed}
             onToggle={toggleExercise}
+            onTimerOpen={setVoiceTimerExercise}
             color={sessionColor}
           />
           <SectionBlock
@@ -429,6 +575,7 @@ export default function Session() {
             exercises={session.finisher}
             completed={completed}
             onToggle={toggleExercise}
+            onTimerOpen={setVoiceTimerExercise}
             color="#FF9500"
           />
         </div>
