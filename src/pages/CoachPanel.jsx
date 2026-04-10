@@ -2144,8 +2144,9 @@ export default function CoachPanel() {
   const handleAddAthlete = useCallback((athlete) => {
     const next = [...athletes, athlete]
     saveAthletesList(next)
-    setShowAddAthlete(false)
     setSelectedAthlete(athlete)
+    // Ne pas fermer la modal ici — elle affiche l'étape invitation
+    // Elle se ferme via son propre bouton "Fermer" → onClose
   }, [athletes, saveAthletesList])
 
   const handleToggleStatus = useCallback((id) => {
