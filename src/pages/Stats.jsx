@@ -4,8 +4,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine
 } from 'recharts'
 import athlete from '../data/athlete.json'
-import plan from '../data/coaching-plan.json'
-import { getCurrentAthleteId } from '../utils/coachStore'
+import { getCurrentAthleteId, getAthletes } from '../utils/coachStore'
 
 const MOVES = [
   { key: 'pullUp', label: 'Tractions', color: '#0EA5E9', unit: 'reps' },
@@ -15,20 +14,35 @@ const MOVES = [
   { key: 'gobletSquat', label: 'Goblet @16kg', color: '#A78BFA', unit: 'reps' },
 ]
 
+// Intentionally modest example values — so athletes feel strong when they do better
+const EXAMPLE_ENTRY = {
+  date: new Date().toISOString().split('T')[0],
+  label: 'Exemple — à remplacer',
+  isExample: true,
+  pullUp: 3, muscleUp: 1, dips: 5, pushUp: 10, gobletSquat: 8,
+}
+
+const parseNum = (str) => {
+  const m = String(str || '').match(/\d+/)
+  return m ? parseInt(m[0]) : null
+}
+
 function perfsKey() {
   return `cbl_perfs_${getCurrentAthleteId() || 'alexandre'}`
 }
 
 function loadPerfs() {
+  const id = getCurrentAthleteId() || 'alexandre'
   try {
     const saved = localStorage.getItem(perfsKey())
     if (saved) return JSON.parse(saved)
   } catch {}
-  return [{
-    date: '2026-04-04',
-    label: 'Baseline',
-    pullUp: 23, muscleUp: 7, dips: 30, pushUp: 52, gobletSquat: 30
-  }]
+  // Alexandre: keep real baseline
+  if (id === 'alexandre') {
+    return [{ date: '2026-04-04', label: 'Baseline', pullUp: 23, muscleUp: 7, dips: 30, pushUp: 52, gobletSquat: 30 }]
+  }
+  // Others: show example data (intentionally low)
+  return [EXAMPLE_ENTRY]
 }
 
 function savePerfs(perfs) {
@@ -146,8 +160,8 @@ function AddEntryForm({ onAdd }) {
 function DeltaBadge({ current, baseline, target }) {
   if (!baseline || !current) return null
   const gained = current - baseline
-  const remaining = target - current
-  const pct = Math.round(((current - baseline) / (target - baseline)) * 100)
+  const remaining = target != null ? target - current : null
+  const pct = target != null ? Math.round(((current - baseline) / (target - baseline)) * 100) : null
   const isGain = gained >= 0
 
   return (
@@ -156,7 +170,7 @@ function DeltaBadge({ current, baseline, target }) {
         {isGain ? '+' : ''}{gained}
       </span>
       <span className="text-xs text-text-muted">depuis baseline</span>
-      {remaining > 0 && (
+      {remaining != null && remaining > 0 && (
         <span className="text-xs text-text-muted">· {remaining} pour atteindre l'objectif</span>
       )}
     </div>
@@ -164,6 +178,11 @@ function DeltaBadge({ current, baseline, target }) {
 }
 
 export default function Stats() {
+  const athleteId = getCurrentAthleteId() || 'alexandre'
+  const athletes = getAthletes()
+  const isAlexandre = athleteId === 'alexandre' || !athletes.find(a => a.id === athleteId)
+  const storedAthlete = athletes.find(a => a.id === athleteId)
+
   const [perfs, setPerfs] = useState(loadPerfs)
   const [activeMove, setActiveMove] = useState('pullUp')
 
@@ -172,21 +191,35 @@ export default function Stats() {
   }, [perfs])
 
   const addEntry = (entry) => {
-    setPerfs(prev => [...prev, entry].sort((a, b) => a.date.localeCompare(b.date)))
+    // When user adds first real entry, remove the example placeholder
+    setPerfs(prev => {
+      const withoutExample = prev.filter(p => !p.isExample)
+      return [...withoutExample, entry].sort((a, b) => a.date.localeCompare(b.date))
+    })
   }
 
-  const deleteEntry = (index) => {
-    if (index === 0) return // protect baseline
-    setPerfs(prev => prev.filter((_, i) => i !== index))
+  const deleteEntry = (realIndex) => {
+    const entry = perfs[realIndex]
+    if (realIndex === 0 && !entry?.isExample) return // protect real baseline only
+    setPerfs(prev => prev.filter((_, i) => i !== realIndex))
   }
+
+  // baseline & target: Alexandre → static data, others → store PRs or null
+  const baseline = isAlexandre
+    ? athlete.maxes[activeMove]?.value
+    : (storedAthlete?.prs?.[activeMove] ? parseNum(storedAthlete.prs[activeMove].value) : null)
+
+  const targetVal = isAlexandre
+    ? athlete.targets3months[activeMove]?.value
+    : (storedAthlete?.prs?.[activeMove] ? parseNum(storedAthlete.prs[activeMove].target) : null)
 
   const move = MOVES.find(m => m.key === activeMove)
-  const baseline = athlete.maxes[activeMove]?.value
-  const targetVal = athlete.targets3months[activeMove]?.value
-  const latestVal = [...perfs].reverse().find(p => p[activeMove] != null)?.[activeMove]
+  const realPerfs = perfs.filter(p => !p.isExample)
+  const latestVal = [...realPerfs].reverse().find(p => p[activeMove] != null)?.[activeMove]
+  const hasOnlyExample = perfs.length > 0 && perfs.every(p => p.isExample)
 
-  // Chart data
-  const chartData = perfs
+  // Chart data (exclude example entries)
+  const chartData = realPerfs
     .filter(p => p[activeMove] != null)
     .map(p => ({ date: p.label || p.date, [activeMove]: p[activeMove] }))
 
@@ -198,10 +231,29 @@ export default function Stats() {
         <div>
           <div className="label mb-1">Suivi progression</div>
           <h1 className="text-2xl font-bold tracking-tight">Mes Stats</h1>
-          <p className="text-sm text-text-muted mt-1">{perfs.length} entrée{perfs.length > 1 ? 's' : ''} enregistrée{perfs.length > 1 ? 's' : ''}</p>
+          <p className="text-sm text-text-muted mt-1">
+            {realPerfs.length} test{realPerfs.length > 1 ? 's' : ''} enregistré{realPerfs.length > 1 ? 's' : ''}
+          </p>
         </div>
         <AddEntryForm onAdd={addEntry} />
       </div>
+
+      {/* Banner exemple */}
+      {hasOnlyExample && (
+        <motion.div
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-start gap-3 p-4 rounded-2xl border border-warn/30 bg-warn/5"
+        >
+          <span className="text-warn text-lg flex-shrink-0">💡</span>
+          <div>
+            <div className="text-sm font-semibold text-warn">Ces chiffres sont des exemples</div>
+            <div className="text-xs text-text-muted mt-0.5 leading-relaxed">
+              Clique sur <strong>Ajouter un test</strong> pour entrer tes vraies performances. Les exemples disparaîtront automatiquement.
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Move selector */}
       <div className="flex gap-2 overflow-x-auto pb-1">
@@ -225,29 +277,37 @@ export default function Stats() {
           <div className="flex items-end justify-between mb-4">
             <div>
               <div className="label mb-1" style={{ color: move.color }}>{move.label}</div>
-              <div className="text-4xl font-bold tabular-nums">{latestVal ?? baseline}</div>
-              <DeltaBadge current={latestVal} baseline={baseline} target={targetVal} />
+              <div className="text-4xl font-bold tabular-nums">
+                {latestVal ?? baseline ?? '—'}
+              </div>
+              {!hasOnlyExample && <DeltaBadge current={latestVal} baseline={baseline} target={targetVal} />}
             </div>
-            <div className="text-right">
-              <div className="label mb-1">Objectif 3 mois</div>
-              <div className="text-2xl font-bold tabular-nums" style={{ color: move.color }}>{targetVal}</div>
-            </div>
+            {targetVal != null && (
+              <div className="text-right">
+                <div className="label mb-1">Objectif 3 mois</div>
+                <div className="text-2xl font-bold tabular-nums" style={{ color: move.color }}>{targetVal}</div>
+              </div>
+            )}
           </div>
 
-          {/* Progress bar */}
-          <div className="h-2 bg-surface-3 rounded-full overflow-hidden mb-1">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${Math.min(100, ((latestVal ?? baseline) / targetVal) * 100)}%` }}
-              transition={{ duration: 0.7 }}
-              className="h-full rounded-full"
-              style={{ backgroundColor: move.color }}
-            />
-          </div>
-          <div className="flex justify-between text-[10px] text-text-muted">
-            <span>Baseline: {baseline}</span>
-            <span>Cible: {targetVal}</span>
-          </div>
+          {/* Progress bar — only if we have a target */}
+          {targetVal != null && (
+            <>
+              <div className="h-2 bg-surface-3 rounded-full overflow-hidden mb-1">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${Math.min(100, ((latestVal ?? baseline ?? 0) / targetVal) * 100)}%` }}
+                  transition={{ duration: 0.7 }}
+                  className="h-full rounded-full"
+                  style={{ backgroundColor: move.color }}
+                />
+              </div>
+              <div className="flex justify-between text-[10px] text-text-muted">
+                <span>Baseline: {baseline ?? '—'}</span>
+                <span>Cible: {targetVal}</span>
+              </div>
+            </>
+          )}
 
           {/* Chart */}
           {chartData.length > 1 && (
@@ -258,7 +318,9 @@ export default function Stats() {
                   <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#666' }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 10, fill: '#666' }} axisLine={false} tickLine={false} domain={['auto', 'auto']} />
                   <Tooltip content={<CustomTooltip />} />
-                  <ReferenceLine y={targetVal} stroke={move.color} strokeDasharray="4 4" strokeOpacity={0.5} label={{ value: 'Objectif', position: 'right', fontSize: 9, fill: move.color }} />
+                  {targetVal != null && (
+                    <ReferenceLine y={targetVal} stroke={move.color} strokeDasharray="4 4" strokeOpacity={0.5} label={{ value: 'Objectif', position: 'right', fontSize: 9, fill: move.color }} />
+                  )}
                   <Line
                     type="monotone"
                     dataKey={activeMove}
@@ -288,9 +350,12 @@ export default function Stats() {
         <div className="label mb-3">Vue d'ensemble</div>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {MOVES.map(m => {
-            const cur = [...perfs].reverse().find(p => p[m.key] != null)?.[m.key] ?? athlete.maxes[m.key]?.value
-            const tgt = athlete.targets3months[m.key]?.value
-            const pct = Math.round((cur / tgt) * 100)
+            const cur = [...realPerfs].reverse().find(p => p[m.key] != null)?.[m.key]
+              ?? (isAlexandre ? athlete.maxes[m.key]?.value : null)
+            const tgt = isAlexandre
+              ? athlete.targets3months[m.key]?.value
+              : (storedAthlete?.prs?.[m.key] ? parseNum(storedAthlete.prs[m.key].target) : null)
+            const pct = cur != null && tgt != null ? Math.round((cur / tgt) * 100) : null
             return (
               <button
                 key={m.key}
@@ -301,11 +366,17 @@ export default function Stats() {
                 style={activeMove === m.key ? { borderColor: m.color + '60' } : {}}
               >
                 <div className="text-xs text-text-muted mb-1">{m.label}</div>
-                <div className="text-xl font-bold tabular-nums">{cur}</div>
-                <div className="h-1 bg-surface-3 rounded-full mt-2 overflow-hidden">
-                  <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: m.color }} />
-                </div>
-                <div className="text-[10px] text-text-muted mt-1">{pct}% · cible {tgt}</div>
+                <div className="text-xl font-bold tabular-nums">{cur ?? '—'}</div>
+                {pct != null ? (
+                  <>
+                    <div className="h-1 bg-surface-3 rounded-full mt-2 overflow-hidden">
+                      <div className="h-full rounded-full" style={{ width: `${Math.min(100, pct)}%`, backgroundColor: m.color }} />
+                    </div>
+                    <div className="text-[10px] text-text-muted mt-1">{pct}% · cible {tgt}</div>
+                  </>
+                ) : (
+                  <div className="text-[10px] text-text-faint mt-2">Pas d'objectif défini</div>
+                )}
               </button>
             )
           })}
@@ -316,31 +387,40 @@ export default function Stats() {
       <div>
         <div className="label mb-3">Historique</div>
         <div className="space-y-2">
-          {[...perfs].reverse().map((entry, i) => (
-            <div key={i} className="bg-white border border-border rounded-xl p-4 flex items-center gap-4">
-              <div className="flex-shrink-0">
-                <div className="text-sm font-semibold">{entry.label || entry.date}</div>
-                <div className="text-xs text-text-muted font-mono">{entry.date}</div>
-              </div>
-              <div className="flex-1 flex flex-wrap gap-x-4 gap-y-1">
-                {MOVES.map(m => entry[m.key] != null && (
-                  <div key={m.key} className="flex items-center gap-1">
-                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: m.color }} />
-                    <span className="text-xs text-text-muted">{m.label.split(' ')[0]}:</span>
-                    <span className="text-xs font-mono font-semibold">{entry[m.key]}</span>
+          {[...perfs].reverse().map((entry, reversedIdx) => {
+            const realIdx = perfs.indexOf(entry)
+            return (
+              <div key={reversedIdx} className={`border rounded-xl p-4 flex items-center gap-4 ${entry.isExample ? 'bg-warn/5 border-warn/20' : 'bg-white border-border'}`}>
+                <div className="flex-shrink-0">
+                  <div className="flex items-center gap-2">
+                    <div className="text-sm font-semibold">{entry.label || entry.date}</div>
+                    {entry.isExample && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-warn/15 text-warn font-bold border border-warn/25">EXEMPLE</span>
+                    )}
                   </div>
-                ))}
+                  <div className="text-xs text-text-muted font-mono">{entry.date}</div>
+                </div>
+                <div className="flex-1 flex flex-wrap gap-x-4 gap-y-1">
+                  {MOVES.map(m => entry[m.key] != null && (
+                    <div key={m.key} className="flex items-center gap-1">
+                      <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: m.color }} />
+                      <span className="text-xs text-text-muted">{m.label.split(' ')[0]}:</span>
+                      <span className={`text-xs font-mono font-semibold ${entry.isExample ? 'text-text-faint' : ''}`}>{entry[m.key]}</span>
+                    </div>
+                  ))}
+                </div>
+                {(realIdx > 0 || entry.isExample) && (
+                  <button
+                    onClick={() => deleteEntry(realIdx)}
+                    className="text-text-faint hover:text-danger transition-colors flex-shrink-0"
+                    title={entry.isExample ? 'Supprimer l\'exemple' : 'Supprimer'}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                  </button>
+                )}
               </div>
-              {perfs.indexOf(entry) > 0 && (
-                <button
-                  onClick={() => deleteEntry(perfs.indexOf(entry))}
-                  className="text-text-faint hover:text-danger transition-colors flex-shrink-0"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                </button>
-              )}
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
     </div>
