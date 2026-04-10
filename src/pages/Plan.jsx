@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import plan from '../data/coaching-plan.json'
-import { getProgram, getCurrentAthleteId } from '../utils/coachStore'
+import { getProgram, getCurrentAthleteId, getAthletes } from '../utils/coachStore'
 
 const PHASE_COLORS = { m1: '#00D4FF', m2: '#FF9500', m3: '#FF3D3D' }
 const TYPE_STYLES = {
@@ -337,14 +337,20 @@ function CoachProgramView() {
 // ─── Plan component ───────────────────────────────────────────────────────────
 
 export default function Plan() {
+  const athleteId = getCurrentAthleteId() || 'alexandre'
+  const athletes = getAthletes()
+  const isAlexandre = athleteId === 'alexandre' || !athletes.find(a => a.id === athleteId)
+
   const [activeTab, setActiveTab] = useState('coach')
   const [expandedMeso, setExpandedMeso] = useState(null)
   const [selectedWeek, setSelectedWeek] = useState(1)
 
   const tabs = [
     { id: 'coach', label: 'Du Coach' },
-    { id: 'macro', label: 'Macro' },
-    { id: 'objectives', label: 'Jalons' },
+    ...(isAlexandre ? [
+      { id: 'macro', label: 'Macro' },
+      { id: 'objectives', label: 'Jalons' },
+    ] : []),
   ]
 
   return (
@@ -353,10 +359,14 @@ export default function Plan() {
       {/* Header */}
       <div>
         <div className="label mb-1">Plan d'entraînement</div>
-        <h1 className="text-2xl font-bold tracking-tight">3 mois vers l'Espoir</h1>
-        <p className="text-sm text-text-muted mt-1">
-          {plan.meta.startDate} · {plan.meta.durationWeeks} semaines · Objectif: {plan.meta.goal}
-        </p>
+        <h1 className="text-2xl font-bold tracking-tight">
+          {isAlexandre ? '3 mois vers l\'Espoir' : 'Mon programme'}
+        </h1>
+        {isAlexandre && (
+          <p className="text-sm text-text-muted mt-1">
+            {plan.meta.startDate} · {plan.meta.durationWeeks} semaines · Objectif: {plan.meta.goal}
+          </p>
+        )}
       </div>
 
       {/* Tabs */}
@@ -376,8 +386,8 @@ export default function Plan() {
         ))}
       </div>
 
-      {/* Macro view */}
-      {activeTab === 'macro' && (
+      {/* Macro view — Alexandre only */}
+      {activeTab === 'macro' && isAlexandre && (
         <motion.div key="macro" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
           {plan.macroPhases.map(phase => {
             const color = PHASE_COLORS[phase.id]
@@ -454,8 +464,8 @@ export default function Plan() {
         </motion.div>
       )}
 
-      {/* Objectives */}
-      {activeTab === 'objectives' && (
+      {/* Objectives — Alexandre only */}
+      {activeTab === 'objectives' && isAlexandre && (
         <motion.div key="objectives" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
           <ProgressionObjectives />
         </motion.div>

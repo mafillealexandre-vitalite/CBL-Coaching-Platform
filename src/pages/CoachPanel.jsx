@@ -1896,8 +1896,9 @@ function AddAthleteModal({ onSave, onClose }) {
   const [form, setForm] = useState({
     name: '', nickname: '', age: '', level: 'Espoir',
     goal: '', goalShort: '', goalMedium: '', goalLong: '',
-    compDate: '', note: '',
+    compDate: '', compName: '', note: '',
   })
+  const [customDate, setCustomDate] = useState(false)
   const [created, setCreated] = useState(null)
   const [copied, setCopied] = useState(false)
 
@@ -1912,6 +1913,7 @@ function AddAthleteModal({ onSave, onClose }) {
       pin,
       status: 'active',
       prs: {},
+      startDate: new Date().toISOString().split('T')[0],
     }
     onSave(athlete)
     setCreated(athlete)
@@ -2014,12 +2016,62 @@ Clique le lien → entre ton code → tu es dans ton espace.
 
             {/* Compétition + notes */}
             <div className="space-y-2">
-              <input
-                type="date"
-                value={form.compDate}
-                onChange={e => setForm(p => ({ ...p, compDate: e.target.value }))}
-                className="w-full bg-surface-2 border border-border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-brand"
-              />
+              <div className="text-[10px] uppercase tracking-wider text-text-faint font-semibold">Compétition cible</div>
+              <div className="grid grid-cols-1 gap-1.5">
+                {[
+                  { label: 'CBL Open Qualifier 2026', date: '2026-09-01' },
+                  { label: 'CBL Autumn Challenge 2026', date: '2026-11-08' },
+                  { label: 'CBL Winter Series 2027', date: '2027-02-06' },
+                  { label: 'CBL Spring Open 2027', date: '2027-04-17' },
+                ].map(comp => {
+                  const selected = form.compName === comp.label
+                  const diff = Math.ceil((new Date(comp.date) - new Date()) / 86400000)
+                  return (
+                    <button
+                      key={comp.date}
+                      type="button"
+                      onClick={() => { setForm(p => ({ ...p, compDate: comp.date, compName: comp.label })); setCustomDate(false) }}
+                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl border text-sm transition-all ${
+                        selected
+                          ? 'border-brand bg-brand/10 text-text-primary'
+                          : 'border-border bg-surface-2 text-text-muted hover:border-brand/40'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        {selected && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="3" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>}
+                        <span className={selected ? 'font-semibold text-text-primary' : ''}>{comp.label}</span>
+                      </div>
+                      <span className="text-[10px] font-mono text-text-faint">{comp.date} · {diff}j</span>
+                    </button>
+                  )
+                })}
+                <button
+                  type="button"
+                  onClick={() => { setCustomDate(true); setForm(p => ({ ...p, compName: 'Autre compétition', compDate: '' })) }}
+                  className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl border text-sm transition-all ${
+                    customDate ? 'border-brand bg-brand/10' : 'border-dashed border-border text-text-faint hover:border-brand/40 hover:text-text-muted'
+                  }`}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Autre compétition
+                </button>
+              </div>
+              {customDate && (
+                <div className="space-y-1.5">
+                  <input
+                    placeholder="Nom de la compétition"
+                    value={form.compName === 'Autre compétition' ? '' : form.compName}
+                    onChange={e => setForm(p => ({ ...p, compName: e.target.value }))}
+                    className="w-full bg-surface-2 border border-border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-brand"
+                  />
+                  <input
+                    type="date"
+                    value={form.compDate}
+                    onChange={e => setForm(p => ({ ...p, compDate: e.target.value }))}
+                    className="w-full bg-surface-2 border border-border rounded-xl px-3 py-2 text-sm text-text-primary focus:outline-none focus:border-brand"
+                  />
+                </div>
+              )}
               <textarea
                 value={form.note}
                 onChange={e => setForm(p => ({ ...p, note: e.target.value }))}

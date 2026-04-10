@@ -46,7 +46,8 @@ function useProfileData() {
       context: stored.note || null,          // null = pas de section contexte
       weakPoint: stored.goalShort || null,   // null = pas de point faible
       competitionDate: stored.compDate || null, // null = pas de countdown
-      nextCompetition: stored.compDate ? 'Compétition CBL' : null,
+      nextCompetition: stored.compName || (stored.compDate ? 'Compétition CBL' : null),
+      startDate: stored.startDate || null,
       defaultWeeklyAvailability: athleteStatic.defaultWeeklyAvailability,
       level: stored.level,
       age: stored.age,
@@ -128,9 +129,9 @@ function MaxCard({ label, current, target, unit, color }) {
   )
 }
 
-function CompetitionProgress() {
-  const start = new Date(plan.meta.startDate)
-  const comp = new Date(athlete.competitionDate)
+function CompetitionProgress({ compDate, nextCompetition, startDate }) {
+  const start = new Date(startDate || plan.meta.startDate)
+  const comp = new Date(compDate)
   const today = new Date()
   const totalDays = (comp - start) / (1000 * 60 * 60 * 24)
   const elapsed = (today - start) / (1000 * 60 * 60 * 24)
@@ -142,8 +143,8 @@ function CompetitionProgress() {
       <div className="flex items-start justify-between mb-4">
         <div>
           <div className="label mb-1">Countdown compétition</div>
-          <div className="text-xl font-bold">{athlete.nextCompetition}</div>
-          <div className="text-xs text-text-muted mt-0.5">{athlete.competitionDate}</div>
+          <div className="text-xl font-bold">{nextCompetition || 'Compétition CBL'}</div>
+          <div className="text-xs text-text-muted mt-0.5">{compDate}</div>
         </div>
         <div className="text-right">
           <div className="text-4xl font-bold tabular-nums text-brand">{remaining}</div>
@@ -212,7 +213,13 @@ export default function Profile() {
       </div>
 
       {/* Countdown — only if athlete has a competition date */}
-      {currentAthlete.competitionDate && <CompetitionProgress />}
+      {currentAthlete.competitionDate && (
+        <CompetitionProgress
+          compDate={currentAthlete.competitionDate}
+          nextCompetition={currentAthlete.nextCompetition}
+          startDate={isAlexandre ? undefined : currentAthlete.startDate}
+        />
+      )}
 
       {/* Context — uniquement si données renseignées */}
       {currentAthlete.context && (

@@ -117,7 +117,7 @@ function PinStep({ athlete, onBack }) {
       exit={{ opacity: 0, y: -10 }}
       className="space-y-6"
     >
-      {/* Hidden input for keyboard / mobile */}
+      {/* Hidden input for keyboard / mobile — onChange only to avoid double-submit */}
       <input
         ref={hiddenRef}
         type="tel"
@@ -129,10 +129,6 @@ function PinStep({ athlete, onBack }) {
           setPin(val)
           setError(false)
           if (val.length === 4) submit(val)
-        }}
-        onKeyDown={e => {
-          if (e.key >= '0' && e.key <= '9') handleDigit(e.key)
-          else if (e.key === 'Backspace') handleDelete()
         }}
         className="absolute opacity-0 w-0 h-0"
         aria-hidden
