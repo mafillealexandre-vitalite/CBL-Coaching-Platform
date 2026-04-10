@@ -12,6 +12,7 @@ import {
 } from '../utils/coachStore'
 import CoachStandards from '../components/coach/CoachStandards'
 import CoachCircuits from '../components/coach/CoachCircuits'
+import CoachOnboarding, { shouldShowCoachOnboarding } from '../components/coach/CoachOnboarding'
 import { MOVEMENT_STANDARDS } from '../data/movementStandards'
 import circuitsData from '../data/circuits.json'
 
@@ -2023,8 +2024,13 @@ export default function CoachPanel() {
   const [showAddAthlete, setShowAddAthlete] = useState(false)
   const [showDisposPanel, setShowDisposPanel] = useState(false)
   const [disposNotifCount, setDisposNotifCount] = useState(() => getAvailabilityNotifs().filter(n => !n.seen).length)
+  const [showOnboarding, setShowOnboarding] = useState(false)
 
-  const handleUnlock = () => { persistRole('coach'); setRoleState('coach') }
+  const handleUnlock = () => {
+    persistRole('coach')
+    setRoleState('coach')
+    if (shouldShowCoachOnboarding()) setShowOnboarding(true)
+  }
   const handleExit = () => { persistRole('athlete'); setRoleState('athlete') }
 
   const saveAthletesList = useCallback((next) => {
@@ -2061,6 +2067,7 @@ export default function CoachPanel() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 space-y-6 animate-fade-in">
+      {showOnboarding && <CoachOnboarding onDone={() => setShowOnboarding(false)} />}
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
@@ -2082,6 +2089,15 @@ export default function CoachPanel() {
                 {disposNotifCount}
               </span>
             )}
+          </button>
+          <button
+            onClick={() => setShowOnboarding(true)}
+            className="w-9 h-9 rounded-lg glass border border-border flex items-center justify-center text-text-muted hover:text-brand hover:border-brand/30 transition-colors"
+            title="Guide de démarrage"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
           </button>
           <button
             onClick={handleExit}
