@@ -24,6 +24,13 @@ function AthleteGuard({ children }) {
   return children
 }
 
+// Guard: redirects non-coaches away from coach-only pages
+function CoachGuard({ children }) {
+  const role = getRole()
+  if (role !== 'coach') return <Navigate to="/dashboard" replace />
+  return children
+}
+
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -71,7 +78,7 @@ export default function App() {
                   <Route path="/stats" element={<Stats />} />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/diagnostic" element={<Diagnostic />} />
-                  <Route path="/coach-panel" element={<CoachPanel />} />
+                  <Route path="/coach-panel" element={<CoachGuard><CoachPanel /></CoachGuard>} />
                   <Route path="/progression" element={<Progression />} />
                   <Route path="/standards" element={<Standards />} />
                   <Route path="/import" element={<Import />} />

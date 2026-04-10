@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { daysToComp } from '../../utils/dates'
-import { getFeedback, getProgram, getStandards, getAvailabilityNotifs, getCurrentAthleteId, getAthletes, logoutAthlete } from '../../utils/coachStore'
+import { getFeedback, getProgram, getStandards, getAvailabilityNotifs, getCurrentAthleteId, getAthletes, getRole, logoutAthlete } from '../../utils/coachStore'
 
 // Compute notification badges (athlete-side)
 function useBadges() {
@@ -120,9 +120,11 @@ export default function Sidebar({ isOpen, onClose }) {
   const badges = useBadges()
   const navigate = useNavigate()
   const athleteId = getCurrentAthleteId()
+  const role = getRole()
   const athletes = getAthletes()
   const currentAthlete = athletes.find(a => a.id === athleteId)
   const athleteName = currentAthlete?.name || 'Athlète'
+  const isAlexandre = athleteId === 'alexandre' || (!athleteId && role !== 'coach')
 
   const handleLogout = () => {
     logoutAthlete()
@@ -199,7 +201,7 @@ export default function Sidebar({ isOpen, onClose }) {
           <div className="h-px mx-1" style={{ background: 'rgba(255,255,255,0.08)' }} />
         </div>
 
-        {bottomLinks.map(link => (
+        {bottomLinks.filter(link => !link.coach || role === 'coach').map(link => (
           <NavLink
             key={link.to}
             to={link.to}
@@ -231,8 +233,8 @@ export default function Sidebar({ isOpen, onClose }) {
         ))}
       </nav>
 
-      {/* Competition countdown */}
-      <CompetitionCountdown />
+      {/* Competition countdown — Alexandre only */}
+      {isAlexandre && <CompetitionCountdown />}
     </div>
   )
 

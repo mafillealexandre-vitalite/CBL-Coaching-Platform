@@ -9,7 +9,7 @@ import Accordion from '../components/ui/Accordion'
 import SessionCompleteModal from '../components/ui/SessionCompleteModal'
 import { WeeklyRecap, MonthlyRecap } from '../components/ui/WeeklyRecap'
 import { estimateSessionDuration, getSessionLog, getPlanWeek } from '../utils/sessionUtils'
-import { uid, getAvailabilityNotifs, saveAvailabilityNotifs, getCoachSessionsForToday, getCurrentAthleteId } from '../utils/coachStore'
+import { uid, getAvailabilityNotifs, saveAvailabilityNotifs, getCoachSessionsForToday, getCurrentAthleteId, getAthletes } from '../utils/coachStore'
 
 const DAYS = [
   { id: 1, short: 'Lun', label: 'Lundi' },
@@ -412,6 +412,7 @@ export default function Dashboard() {
   const [showNextWeek, setShowNextWeek] = useState(false)
 
   const _aid = getCurrentAthleteId() || 'alexandre'
+  const isAlexandre = _aid === 'alexandre' || !getAthletes().find(a => a.id === _aid)
   const nextWeekKey = `cbl_availability_next_${_aid}`
   const [nextAvailability, setNextAvailability] = useState(() => {
     try { const s = localStorage.getItem(nextWeekKey); return s ? JSON.parse(s) : athlete.defaultWeeklyAvailability } catch { return athlete.defaultWeeklyAvailability }
@@ -642,25 +643,29 @@ export default function Dashboard() {
         />
       </Accordion>
 
-      {/* ACCORDION: Mes objectifs */}
-      <Accordion id="trajectoire" title="Mes objectifs" icon={targetIcon} defaultOpen={false}>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <StatBadge label="Tractions" current={maxes.pullUp.value} target={targets.pullUp.value} unit=" reps" />
-          <StatBadge label="Muscle-up" current={maxes.muscleUp.value} target={targets.muscleUp.value} unit=" reps" />
-          <StatBadge label="Dips" current={maxes.dips.value} target={targets.dips.value} unit=" reps" />
-          <StatBadge label="Pompes" current={maxes.pushUp.value} target={targets.pushUp.value} unit=" reps" />
-          <StatBadge label="Goblet @16kg" current={maxes.gobletSquat.value} target={targets.gobletSquat.value} unit=" reps" />
-          <Link to="/stats" className="glass glass-hover rounded-xl p-4 flex flex-col items-center justify-center gap-2 text-text-muted hover:text-brand transition-colors">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-            <span className="text-xs font-medium">Toutes les stats</span>
-          </Link>
-        </div>
-      </Accordion>
+      {/* ACCORDION: Mes objectifs — Alexandre only */}
+      {isAlexandre && (
+        <Accordion id="trajectoire" title="Mes objectifs" icon={targetIcon} defaultOpen={false}>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <StatBadge label="Tractions" current={maxes.pullUp.value} target={targets.pullUp.value} unit=" reps" />
+            <StatBadge label="Muscle-up" current={maxes.muscleUp.value} target={targets.muscleUp.value} unit=" reps" />
+            <StatBadge label="Dips" current={maxes.dips.value} target={targets.dips.value} unit=" reps" />
+            <StatBadge label="Pompes" current={maxes.pushUp.value} target={targets.pushUp.value} unit=" reps" />
+            <StatBadge label="Goblet @16kg" current={maxes.gobletSquat.value} target={targets.gobletSquat.value} unit=" reps" />
+            <Link to="/stats" className="glass glass-hover rounded-xl p-4 flex flex-col items-center justify-center gap-2 text-text-muted hover:text-brand transition-colors">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+              <span className="text-xs font-medium">Toutes les stats</span>
+            </Link>
+          </div>
+        </Accordion>
+      )}
 
-      {/* ACCORDION: Prochaine compétition */}
-      <Accordion id="competition" title="Prochaine compétition" icon={trophyIcon} defaultOpen={false}>
-        <CompetitionBlock />
-      </Accordion>
+      {/* ACCORDION: Prochaine compétition — Alexandre only */}
+      {isAlexandre && (
+        <Accordion id="competition" title="Prochaine compétition" icon={trophyIcon} defaultOpen={false}>
+          <CompetitionBlock />
+        </Accordion>
+      )}
 
       {/* Quick access */}
       <div>
@@ -670,7 +675,7 @@ export default function Dashboard() {
             { to: '/circuits', label: 'Circuits CBL', sub: '11 circuits', icon: <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>, color: '#FF9500', bg: 'bg-warn/10 border-warn/20' },
             { to: '/progression', label: 'Progression', sub: 'Calendrier + historique', icon: <><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>, color: '#00D47A', bg: 'bg-success/10 border-success/20' },
             { to: '/diagnostic', label: 'Diagnostic', sub: 'Profil 4 axes', text: '⚡', color: '#00D4FF', bg: 'bg-brand/10 border-brand/20' },
-            { to: '/coach', label: 'Coach', sub: 'Débrief séance', icon: <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>, color: '#FF9500', bg: 'bg-warn/10 border-warn/20' },
+            { to: '/stats', label: 'Mes stats', sub: 'Progression & perfs', icon: <><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></>, color: '#A78BFA', bg: 'bg-purple-500/10 border-purple-500/20' },
           ].map(item => (
             <Link key={item.to} to={item.to} className="glass glass-hover rounded-xl p-3.5 flex items-center gap-3">
               <div className={`w-8 h-8 rounded-lg border flex items-center justify-center flex-shrink-0 ${item.bg}`}>
