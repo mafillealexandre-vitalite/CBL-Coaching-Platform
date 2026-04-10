@@ -8,7 +8,6 @@ import Circuits from './pages/Circuits'
 import Stats from './pages/Stats'
 import Profile from './pages/Profile'
 import Diagnostic from './pages/Diagnostic'
-import Coach from './pages/Coach'
 import CoachPanel from './pages/CoachPanel'
 import Progression from './pages/Progression'
 import Standards from './pages/Standards'
@@ -72,7 +71,6 @@ export default function App() {
                   <Route path="/stats" element={<Stats />} />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/diagnostic" element={<Diagnostic />} />
-                  <Route path="/coach" element={<Coach />} />
                   <Route path="/coach-panel" element={<CoachPanel />} />
                   <Route path="/progression" element={<Progression />} />
                   <Route path="/standards" element={<Standards />} />
